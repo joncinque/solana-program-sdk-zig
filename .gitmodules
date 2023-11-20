@@ -1,6 +1,6 @@
 [submodule "borsh"]
 	path = borsh
-	url = https://github.com/lithdew/borsh-zig.git
+	url = https://github.com/joncinque/borsh-zig.git
 [submodule "bincode"]
 	path = bincode
-	url = https://github.com/lithdew/bincode-zig.git
+	url = https://github.com/joncinque/bincode-zig.git
