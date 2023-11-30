@@ -69,7 +69,7 @@ pub const PublicKey = extern struct {
         const p_root_check = vxx.add(u); // vx^2+u
         const has_m_root = m_root_check.isZero();
         const has_p_root = p_root_check.isZero();
-        return @boolToInt(has_m_root) | @boolToInt(has_p_root);
+        return @intFromBool(has_m_root) | @intFromBool(has_p_root);
     }
 
     pub fn createProgramAddress(seeds: anytype, program_id: PublicKey) !PublicKey {
@@ -97,7 +97,7 @@ pub const PublicKey = extern struct {
             };
 
             var seeds_array: [seeds.len][]const u8 = undefined;
-            inline for (seeds) |seed, i| seeds_array[i] = seed;
+            inline for (seeds, 0..) |seed, i| seeds_array[i] = seed;
 
             const result = Syscall.sol_create_program_address(
                 &seeds_array,

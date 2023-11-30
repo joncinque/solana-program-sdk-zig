@@ -1,10 +1,10 @@
 const std = @import("std");
 
-const heap_start = @intToPtr([*]u8, 0x300000000);
+const heap_start = @as([*]u8, @ptrFromInt(0x300000000));
 const heap_length = 32 * 1024;
 
 pub const allocator: std.mem.Allocator = .{
-    .ptr = @ptrCast(*Allocator, @alignCast(@alignOf(Allocator), heap_start)),
+    .ptr = @as(*Allocator, @ptrCast(@alignCast(heap_start))),
     .vtable = &.{
         .alloc = Allocator.allocFn,
         .resize = Allocator.resizeFn,
@@ -27,12 +27,12 @@ const Allocator = struct {
     ) ?[*]u8 {
         _ = return_address;
 
-        const self = @ptrCast(*Allocator, @alignCast(@alignOf(Allocator), ctx));
+        const self = @as(*Allocator, @ptrCast(@alignCast(ctx)));
         if (self.end_index == 0) {
             self.end_index = comptime std.mem.alignPointerOffset(heap_start, @alignOf(Allocator)).? + @sizeOf(Allocator);
         }
 
-        const ptr_align = @as(usize, 1) << @intCast(std.mem.Allocator.Log2Align, log2_ptr_align);
+        const ptr_align = @as(usize, 1) << @as(std.mem.Allocator.Log2Align, @intCast(log2_ptr_align));
         const offset = std.mem.alignPointerOffset(heap_start + self.end_index, ptr_align) orelse {
             return null;
         };
@@ -58,7 +58,7 @@ const Allocator = struct {
         _ = log2_buf_align;
         _ = return_address;
 
-        const self = @ptrCast(*Allocator, @alignCast(@alignOf(Allocator), ctx));
+        const self = @as(*Allocator, @ptrCast(@alignCast(ctx)));
         if (self.end_index == 0) {
             self.end_index = comptime std.mem.alignPointerOffset(heap_start, @alignOf(Allocator)).? + @sizeOf(Allocator);
         }
@@ -92,7 +92,7 @@ const Allocator = struct {
     ) void {
         _ = log2_buf_align;
         _ = return_address;
-        const self = @ptrCast(*Allocator, @alignCast(@alignOf(Allocator), ctx));
+        const self = @as(*Allocator, @ptrCast(@alignCast(ctx)));
         if (self.isLastAllocation(buf)) {
             self.end_index -= buf.len;
         }

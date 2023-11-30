@@ -30,7 +30,7 @@ pub const Error = error{
 };
 
 pub fn getErrorFromCode(code: u32) (Error || error{Unknown})!void {
-    inline for (@typeInfo(Error).ErrorSet.?) |err, i| {
+    inline for (@typeInfo(Error).ErrorSet.?, 0..) |err, i| {
         if (i == code) {
             return @field(token.Error, err.name);
         }

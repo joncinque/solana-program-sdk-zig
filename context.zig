@@ -17,13 +17,13 @@ pub const Context = struct {
 
         var i: usize = 0;
         while (i < num_accounts) : (i += 1) {
-            const account: *align(1) sol.Account.Data = @ptrCast(*align(1) sol.Account.Data, ptr);
+            const account: *align(1) sol.Account.Data = @as(*align(1) sol.Account.Data, @ptrCast(ptr));
             if (account.duplicate_index != std.math.maxInt(u8)) {
                 ptr += @sizeOf(usize);
                 continue;
             }
             ptr += @sizeOf(sol.Account.Data);
-            ptr = @intToPtr([*]u8, std.mem.alignForward(@ptrToInt(ptr + account.data_len + 10 * 1024), @alignOf(usize)));
+            ptr = @as([*]u8, @ptrFromInt(std.mem.alignForward(@intFromPtr(ptr + account.data_len + 10 * 1024), @alignOf(usize))));
             ptr += @sizeOf(u64);
         }
 
@@ -33,7 +33,7 @@ pub const Context = struct {
         const data = ptr[0..data_len];
         ptr += data_len;
 
-        const program_id = @ptrCast(*sol.PublicKey, ptr);
+        const program_id = @as(*sol.PublicKey, @ptrCast(ptr));
         ptr += @sizeOf(sol.PublicKey);
 
         return Context{
@@ -64,7 +64,7 @@ pub const Context = struct {
         comptime var last_field_is_slice = false;
 
         comptime {
-            inline for (@typeInfo(Accounts).Struct.fields) |field, i| {
+            inline for (@typeInfo(Accounts).Struct.fields, 0..) |field, i| {
                 switch (field.type) {
                     sol.Account => min_accounts += 1,
                     []sol.Account => {
@@ -89,9 +89,9 @@ pub const Context = struct {
         inline for (@typeInfo(Accounts).Struct.fields) |field| {
             switch (field.type) {
                 sol.Account => {
-                    const account: *align(1) sol.Account.Data = @ptrCast(*align(1) sol.Account.Data, ptr);
+                    const account: *align(1) sol.Account.Data = @as(*align(1) sol.Account.Data, @ptrCast(ptr));
                     if (account.duplicate_index != std.math.maxInt(u8)) {
-                        inline for (@typeInfo(Accounts).Struct.fields) |cloned_field, cloned_index| {
+                        inline for (@typeInfo(Accounts).Struct.fields, 0..) |cloned_field, cloned_index| {
                             if (cloned_field.type == sol.Account) {
                                 if (account.duplicate_index == cloned_index) {
                                     @field(accounts, field.name) = @field(accounts, cloned_field.name);
@@ -100,13 +100,13 @@ pub const Context = struct {
                         }
                         ptr += @sizeOf(usize);
                     } else {
-                        const start = @ptrToInt(ptr);
+                        const start = @intFromPtr(ptr);
                         ptr += @sizeOf(sol.Account.Data);
-                        ptr = @intToPtr([*]u8, std.mem.alignForward(@ptrToInt(ptr + account.data_len + 10 * 1024), @alignOf(usize)));
+                        ptr = @as([*]u8, @ptrFromInt(std.mem.alignForward(@intFromPtr(ptr + account.data_len + 10 * 1024), @alignOf(usize))));
                         ptr += @sizeOf(u64);
-                        const end = @ptrToInt(ptr);
+                        const end = @intFromPtr(ptr);
 
-                        @field(accounts, field.name) = .{ .ptr = @alignCast(@alignOf(sol.Account.Data), account), .len = end - start };
+                        @field(accounts, field.name) = .{ .ptr = @as(*sol.Account.data, @ptrCast(@alignCast(account))), .len = end - start };
                     }
                 },
                 []sol.Account => {
@@ -114,9 +114,9 @@ pub const Context = struct {
                     errdefer sol.allocator.free(remaining_accounts);
 
                     for (remaining_accounts) |*remaining_account| {
-                        const account: *align(1) sol.Account.Data = @ptrCast(*align(1) sol.Account.Data, ptr);
+                        const account: *align(1) sol.Account.Data = @as(*align(1) sol.Account.Data, @ptrCast(ptr));
                         if (account.duplicate_index != std.math.maxInt(u8)) {
-                            inline for (@typeInfo(Accounts).Struct.fields) |cloned_field, cloned_index| {
+                            inline for (@typeInfo(Accounts).Struct.fields, 0..) |cloned_field, cloned_index| {
                                 if (cloned_field.type == sol.Account) {
                                     if (account.duplicate_index == cloned_index) {
                                         remaining_account.* = @field(accounts, cloned_field.name);
@@ -125,13 +125,13 @@ pub const Context = struct {
                             }
                             ptr += @sizeOf(usize);
                         } else {
-                            const start = @ptrToInt(ptr);
+                            const start = @intFromPtr(ptr);
                             ptr += @sizeOf(sol.Account.Data);
-                            ptr = @intToPtr([*]u8, std.mem.alignForward(@ptrToInt(ptr + account.data_len + 10 * 1024), @alignOf(usize)));
+                            ptr = @as([*]u8, @ptrFromInt(std.mem.alignForward(@intFromPtr(ptr + account.data_len + 10 * 1024), @alignOf(usize))));
                             ptr += @sizeOf(u64);
-                            const end = @ptrToInt(ptr);
+                            const end = @intFromPtr(ptr);
 
-                            remaining_account.* = .{ .ptr = @alignCast(@alignOf(sol.Account.Data), account), .len = end - start };
+                            remaining_account.* = .{ .ptr = @as(*sol.Account.data, @ptrCast(@alignCast(account))), .len = end - start };
                         }
                     }
 

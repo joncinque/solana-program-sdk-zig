@@ -15,7 +15,7 @@ pub const Alphabet = struct {
         var alphabet: base58.Alphabet = .{ .character_map = characters.*, .digits_map = [_]u8{255} ** 128 };
 
         var distinct: usize = 0;
-        for (alphabet.character_map) |b, i| {
+        for (alphabet.character_map, 0..) |b, i| {
             if (alphabet.digits_map[b] == 255) {
                 distinct += 1;
             }
@@ -59,13 +59,13 @@ pub const Alphabet = struct {
                 if (val == 255) {
                     @compileError("failed to compute base58 string length: unknown character '" ++ [_]u8{r} ++ "'");
                 }
-                for (decoded[0..len]) |b, i| {
+                for (decoded[0..len], 0..) |b, i| {
                     val += @as(u32, b) * 58;
-                    decoded[i] = @truncate(u8, val);
+                    decoded[i] = @as(u8, @truncate(val));
                     val >>= 8;
                 }
                 while (val > 0) : (val >>= 8) {
-                    decoded[len] = @truncate(u8, val);
+                    decoded[len] = @as(u8, @truncate(val));
                     len += 1;
                 }
             }
@@ -90,13 +90,13 @@ pub const Alphabet = struct {
             var len: usize = 0;
             for (decoded) |r| {
                 var val: u32 = r;
-                for (encoded[0..len]) |b, i| {
+                for (encoded[0..len], 0..) |b, i| {
                     val += @as(u32, b) << 8;
-                    encoded[i] = @intCast(u8, val % 58);
+                    encoded[i] = @as(u8, @intCast(val % 58));
                     val /= 58;
                 }
                 while (val > 0) : (val /= 58) {
-                    encoded[len] = @intCast(u8, val % 58);
+                    encoded[len] = @as(u8, @intCast(val % 58));
                     len += 1;
                 }
             }
@@ -113,23 +113,23 @@ pub const Alphabet = struct {
     }
 
     pub fn encode(comptime self: base58.Alphabet, encoded: []u8, decoded: []const u8) []const u8 {
-        std.mem.set(u8, encoded, 0);
+        @memset(encoded, 0);
 
         var len: usize = 0;
         for (decoded) |r| {
             var val: u32 = r;
-            for (encoded[0..len]) |b, i| {
+            for (encoded[0..len], 0..) |b, i| {
                 val += @as(u32, b) << 8;
-                encoded[i] = @intCast(u8, val % 58);
+                encoded[i] = @as(u8, @intCast(val % 58));
                 val /= 58;
             }
             while (val > 0) : (val /= 58) {
-                encoded[len] = @intCast(u8, val % 58);
+                encoded[len] = @as(u8, @intCast(val % 58));
                 len += 1;
             }
         }
 
-        for (encoded[0..len]) |b, i| {
+        for (encoded[0..len], 0..) |b, i| {
             encoded[i] = self.character_map[b];
         }
 
@@ -151,7 +151,7 @@ pub const Alphabet = struct {
             return error.ZeroLengthString;
         }
 
-        std.mem.set(u8, decoded, 0);
+        @memset(decoded, 0);
 
         var len: usize = 0;
         for (encoded) |r| {
@@ -159,13 +159,13 @@ pub const Alphabet = struct {
             if (val == 255) {
                 return error.InvalidBase58Digit;
             }
-            for (decoded[0..len]) |b, i| {
+            for (decoded[0..len], 0..) |b, i| {
                 val += @as(u32, b) * 58;
-                decoded[i] = @truncate(u8, val);
+                decoded[i] = @as(u8, @truncate(val));
                 val >>= 8;
             }
             while (val > 0) : (val >>= 8) {
-                decoded[len] = @truncate(u8, val);
+                decoded[len] = @as(u8, @truncate(val));
                 len += 1;
             }
         }
@@ -206,7 +206,7 @@ test "base58: test vectors" {
         .{ "The quick brown fox jumps over the lazy dog.", "USm3fpXnKG5EUBx2ndxBDMPVciP5hGey2Jh4NDv6gmeo1LkMeiKrLJUUBk6Z" },
         .{ &[_]u8{ 0x00, 0x00, 0x28, 0x7f, 0xb4, 0xcd }, "11233QC4" },
     }) |test_case| {
-        try std.testing.expectEqualSlices(u8, test_case[1], &base58.bitcoin.comptimeEncode(test_case[0]));
-        try std.testing.expectEqualSlices(u8, test_case[0], &base58.bitcoin.comptimeDecode(test_case[1]));
+        try comptime std.testing.expectEqualSlices(u8, test_case[1], &base58.bitcoin.comptimeEncode(test_case[0]));
+        try comptime std.testing.expectEqualSlices(u8, test_case[0], &base58.bitcoin.comptimeDecode(test_case[1]));
     }
 }

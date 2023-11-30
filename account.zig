@@ -63,7 +63,7 @@ pub const Account = struct {
     }
 
     pub fn data(self: Account) []u8 {
-        const data_ptr = @intToPtr([*]u8, @ptrToInt(self.ptr)) + @sizeOf(Account.Data);
+        const data_ptr = @as([*]u8, @ptrFromInt(@intFromPtr(self.ptr))) + @sizeOf(Account.Data);
         return data_ptr[0..self.ptr.data_len];
     }
 
@@ -84,8 +84,8 @@ pub const Account = struct {
     }
 
     pub fn info(self: Account) Account.Info {
-        const data_ptr = @intToPtr([*]u8, @ptrToInt(self.ptr)) + @sizeOf(Account.Data);
-        const rent_epoch = @intToPtr(*u64, @ptrToInt(self.ptr) + self.len - @sizeOf(u64));
+        const data_ptr = @as([*]u8, @ptrFromInt(@intFromPtr(self.ptr))) + @sizeOf(Account.Data);
+        const rent_epoch = @as(*u64, @ptrFromInt(@intFromPtr(self.ptr) + self.len - @sizeOf(u64)));
 
         return .{
             .id = &self.ptr.id,

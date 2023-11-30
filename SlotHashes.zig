@@ -18,5 +18,5 @@ len: u64,
 
 pub fn from(data: []const u8) []const SlotHash {
     const len = std.mem.readIntSliceLittle(u64, data[0..@sizeOf(u64)]);
-    return @ptrCast([*]const SlotHash, @alignCast(@alignOf(SlotHash), data.ptr + @sizeOf(u64)))[0..len];
+    return @as([*]const SlotHash, @ptrCast(@alignCast(data.ptr + @sizeOf(u64))))[0..len];
 }

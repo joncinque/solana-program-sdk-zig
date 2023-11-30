@@ -32,7 +32,7 @@ pub const Rent = struct {
         pub fn getAmountDue(self: Rent.Data, balance: u64, data_len: usize, years_elapsed: f64) ?u64 {
             if (self.isExempt(balance, data_len)) return null;
             const total_data_len: u64 = Rent.account_storage_overhead + data_len;
-            return @floatToInt(u64, @intToFloat(f64, total_data_len * self.lamports_per_byte_year) * years_elapsed);
+            return @intFromFloat(@as(f64, @floatFromInt(total_data_len * self.lamports_per_byte_year)) * years_elapsed);
         }
 
         pub fn isExempt(self: Rent.Data, balance: u64, data_len: usize) bool {
@@ -41,7 +41,7 @@ pub const Rent = struct {
 
         pub fn getMinimumBalance(self: Rent.Data, data_len: usize) u64 {
             const total_data_len: u64 = Rent.account_storage_overhead + data_len;
-            return @floatToInt(u64, @intToFloat(f64, total_data_len * self.lamports_per_byte_year) * self.exemption_threshold);
+            return @intFromFloat(@as(f64, @floatFromInt(total_data_len * self.lamports_per_byte_year)) * self.exemption_threshold);
         }
     };
 
