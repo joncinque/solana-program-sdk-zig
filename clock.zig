@@ -1,7 +1,9 @@
-const sol = @import("sol.zig");
+const bpf = @import("bpf.zig");
+const log = @import("log.zig");
+const PublicKey = @import("public_key.zig").PublicKey;
 
 pub const Clock = extern struct {
-    pub const id = sol.clock_id;
+    pub const id = PublicKey.comptimeFromBase58("SysvarC1ock11111111111111111111111111111111");
 
     /// The current network/bank slot
     slot: u64,
@@ -21,13 +23,13 @@ pub const Clock = extern struct {
 
     pub fn get() !Clock {
         var clock: Clock = undefined;
-        if (sol.is_bpf_program) {
+        if (bpf.is_bpf_program) {
             const Syscall = struct {
                 extern fn sol_get_clock_sysvar(ptr: *Clock) callconv(.C) u64;
             };
             const result = Syscall.sol_get_clock_sysvar(&clock);
             if (result != 0) {
-                sol.print("failed to get clock sysvar: error code {}", .{result});
+                log.print("failed to get clock sysvar: error code {}", .{result});
                 return error.Unexpected;
             }
         }

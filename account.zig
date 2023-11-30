@@ -1,5 +1,5 @@
 const std = @import("std");
-const sol = @import("sol.zig");
+const PublicKey = @import("public_key.zig").PublicKey;
 
 pub const Account = struct {
     /// A Solana account sliced from what is provided as inputs to the BPF virtual machine.
@@ -9,8 +9,8 @@ pub const Account = struct {
         is_writable: bool,
         is_executable: bool,
         _: [4]u8,
-        id: sol.PublicKey,
-        owner_id: sol.PublicKey,
+        id: PublicKey,
+        owner_id: PublicKey,
         lamports: u64,
         data_len: usize,
 
@@ -30,17 +30,17 @@ pub const Account = struct {
 
     /// Metadata representing a Solana acconut.
     pub const Param = extern struct {
-        id: *const sol.PublicKey,
+        id: *const PublicKey,
         is_writable: bool,
         is_signer: bool,
     };
 
     pub const Info = extern struct {
-        id: *const sol.PublicKey,
+        id: *const PublicKey,
         lamports: *u64,
         data_len: u64,
         data: [*]u8,
-        owner_id: *const sol.PublicKey,
+        owner_id: *const PublicKey,
         rent_epoch: u64,
         is_signer: bool,
         is_writable: bool,
@@ -50,7 +50,7 @@ pub const Account = struct {
     ptr: *Account.Data,
     len: usize,
 
-    pub fn id(self: Account) sol.PublicKey {
+    pub fn id(self: Account) PublicKey {
         return self.ptr.id;
     }
 
@@ -58,7 +58,7 @@ pub const Account = struct {
         return &self.ptr.lamports;
     }
 
-    pub fn ownerId(self: Account) sol.PublicKey {
+    pub fn ownerId(self: Account) PublicKey {
         return self.ptr.owner_id;
     }
 

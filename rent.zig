@@ -1,7 +1,9 @@
-const sol = @import("sol.zig");
+const bpf = @import("bpf.zig");
+const log = @import("log.zig");
+const PublicKey = @import("public_key.zig").PublicKey;
 
 pub const Rent = struct {
-    pub const id = sol.rent_id;
+    pub const id = PublicKey.comptimeFromBase58("SysvarRent111111111111111111111111111111111");
 
     /// Default rental rate in lamports/byte-year based on:
     /// - 10^9 lamports per SOL
@@ -47,13 +49,13 @@ pub const Rent = struct {
 
     pub fn get() !Rent.Data {
         var rent: Rent.Data = undefined;
-        if (sol.is_bpf_program) {
+        if (bpf.is_bpf_program) {
             const Syscall = struct {
                 extern fn sol_get_rent_sysvar(ptr: *Rent.Data) callconv(.C) u64;
             };
             const result = Syscall.sol_get_rent_sysvar(&rent);
             if (result != 0) {
-                sol.print("failed to get rent sysvar: error code {}", .{result});
+                log.print("failed to get rent sysvar: error code {}", .{result});
                 return error.Unexpected;
             }
         }

@@ -2,7 +2,8 @@ const std = @import("std");
 const base58 = @import("base58");
 const builtin = @import("builtin");
 
-const sol = @import("sol.zig");
+const bpf = @import("bpf.zig");
+const log = @import("log.zig");
 
 const mem = std.mem;
 const testing = std.testing;
@@ -86,7 +87,7 @@ pub const PublicKey = extern struct {
 
         var address: PublicKey = undefined;
 
-        if (sol.is_bpf_program) {
+        if (bpf.is_bpf_program) {
             const Syscall = struct {
                 extern fn sol_create_program_address(
                     seeds_ptr: [*]const []const u8,
@@ -106,7 +107,7 @@ pub const PublicKey = extern struct {
                 &address,
             );
             if (result != 0) {
-                sol.print("failed to create program address with seeds {any} and program id {}: error code {}", .{
+                log.print("failed to create program address with seeds {any} and program id {}: error code {}", .{
                     seeds,
                     program_id,
                     result,
@@ -138,7 +139,7 @@ pub const PublicKey = extern struct {
     pub fn findProgramAddress(seeds: anytype, program_id: PublicKey) !ProgramDerivedAddress {
         var pda: ProgramDerivedAddress = undefined;
 
-        if (comptime sol.is_bpf_program) {
+        if (comptime bpf.is_bpf_program) {
             const Syscall = struct {
                 extern fn sol_try_find_program_address(
                     seeds_ptr: [*]const []const u8,
@@ -171,7 +172,7 @@ pub const PublicKey = extern struct {
                 &pda.bump_seed[0],
             );
             if (result != 0) {
-                sol.print("failed to find program address given seeds {any} and program id {}: error code {}", .{
+                log.print("failed to find program address given seeds {any} and program id {}: error code {}", .{
                     seeds,
                     program_id,
                     result,

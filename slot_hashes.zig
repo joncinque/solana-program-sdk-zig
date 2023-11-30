@@ -1,9 +1,9 @@
 const std = @import("std");
-const sol = @import("sol.zig");
+const PublicKey = @import("public_key.zig").PublicKey;
 
 const SlotHashes = @This();
 
-pub const id = sol.slot_hashes_id;
+pub const id = PublicKey.comptimeFromBase58("SysvarS1otHashes111111111111111111111111111");
 
 /// About 2.5 minutes to get your vote in.
 pub const max_entries = 512;

@@ -1,29 +1,33 @@
 const std = @import("std");
 const bincode = @import("bincode");
 
-const sol = @import("sol.zig");
+const Account = @import("account.zig").Account;
+const allocator = @import("allocator.zig");
+const ix = @import("instruction.zig");
+const PublicKey = @import("public_key.zig").PublicKey;
 
 const SystemProgram = @This();
+pub const id = PublicKey.comptimeFromBase58("11111111111111111111111111111111");
 
-pub fn createAccount(account: sol.Account.Info, params: struct {
-    payer: sol.Account.Info,
+pub fn createAccount(account: Account.Info, params: struct {
+    payer: Account.Info,
     lamports: u64,
     space: u64,
-    owner_id: sol.PublicKey,
+    owner_id: PublicKey,
     seeds: []const []const []const u8 = &.{},
 }) !void {
-    const data = try bincode.writeAlloc(sol.allocator, SystemProgram.Instruction{
+    const data = try bincode.writeAlloc(allocator, SystemProgram.Instruction{
         .create_account = .{
             .lamports = params.lamports,
             .space = params.space,
             .owner_id = params.owner_id,
         },
     }, .{});
-    defer sol.allocator.free(data);
+    defer allocator.free(data);
 
-    const instruction = sol.Instruction.from(.{
-        .program_id = &sol.system_program_id,
-        .accounts = &[_]sol.Account.Param{
+    const instruction = ix.Instruction.from(.{
+        .program_id = &id,
+        .accounts = &[_]Account.Param{
             .{ .id = params.payer.id, .is_writable = true, .is_signer = true },
             .{ .id = account.id, .is_writable = true, .is_signer = true },
         },
@@ -34,19 +38,19 @@ pub fn createAccount(account: sol.Account.Info, params: struct {
 }
 
 pub fn transfer(params: struct {
-    from: sol.Account.Info,
-    to: sol.Account.Info,
+    from: Account.Info,
+    to: Account.Info,
     lamports: u64,
     seeds: []const []const []const u8 = &.{},
 }) !void {
-    const data = try bincode.writeAlloc(sol.allocator, SystemProgram.Instruction{
+    const data = try bincode.writeAlloc(allocator, SystemProgram.Instruction{
         .transfer = .{ .lamports = params.lamports },
     }, .{});
-    defer sol.allocator.free(data);
+    defer allocator.free(data);
 
-    const instruction = sol.Instruction.from(.{
-        .program_id = &sol.system_program_id,
-        .accounts = &[_]sol.Account.Param{
+    const instruction = ix.Instruction.from(.{
+        .program_id = &id,
+        .accounts = &[_]Account.Param{
             .{ .id = params.from.id, .is_writable = true, .is_signer = true },
             .{ .id = params.to.id, .is_writable = true, .is_signer = false },
         },
@@ -56,17 +60,17 @@ pub fn transfer(params: struct {
     try instruction.invokeSigned(&.{ params.from, params.to }, params.seeds);
 }
 
-pub fn allocate(account: sol.Account.Info, space: u64, params: struct {
+pub fn allocate(account: Account.Info, space: u64, params: struct {
     seeds: []const []const []const u8 = &.{},
 }) !void {
-    const data = try bincode.writeAlloc(sol.allocator, SystemProgram.Instruction{
+    const data = try bincode.writeAlloc(allocator, SystemProgram.Instruction{
         .allocate = .{ .space = space },
     }, .{});
-    defer sol.allocator.free(data);
+    defer allocator.free(data);
 
-    const instruction = sol.Instruction.from(.{
-        .program_id = &sol.system_program_id,
-        .accounts = &[_]sol.Account.Param{
+    const instruction = ix.Instruction.from(.{
+        .program_id = &id,
+        .accounts = &[_]Account.Param{
             .{ .id = account.id, .is_writable = true, .is_signer = true },
         },
         .data = data,
@@ -75,17 +79,17 @@ pub fn allocate(account: sol.Account.Info, space: u64, params: struct {
     try instruction.invokeSigned(&.{account}, params.seeds);
 }
 
-pub fn assign(account: sol.Account.Info, owner_id: sol.PublicKey, params: struct {
+pub fn assign(account: Account.Info, owner_id: PublicKey, params: struct {
     seeds: []const []const []const u8 = &.{},
 }) !void {
-    const data = try bincode.writeAlloc(sol.allocator, SystemProgram.Instruction{
+    const data = try bincode.writeAlloc(allocator, SystemProgram.Instruction{
         .assign = .{ .owner_id = owner_id },
     }, .{});
-    defer sol.allocator.free(data);
+    defer allocator.free(data);
 
-    const instruction = sol.Instruction.from(.{
-        .program_id = &sol.system_program_id,
-        .accounts = &[_]sol.Account.Param{
+    const instruction = ix.Instruction.from(.{
+        .program_id = &id,
+        .accounts = &[_]Account.Param{
             .{ .id = account.id, .is_writable = true, .is_signer = true },
         },
         .data = data,
@@ -106,7 +110,7 @@ pub const Instruction = union(enum(u32)) {
         /// Number of bytes of memory to allocate
         space: u64,
         /// Address of program that will own the new account
-        owner_id: sol.PublicKey,
+        owner_id: PublicKey,
     },
     /// Assign account to a program
     ///
@@ -114,7 +118,7 @@ pub const Instruction = union(enum(u32)) {
     ///   0. `[WRITE, SIGNER]` Assigned account public key
     assign: struct {
         /// Owner program account
-        owner_id: sol.PublicKey,
+        owner_id: PublicKey,
     },
     /// Transfer lamports
     ///
@@ -129,20 +133,20 @@ pub const Instruction = union(enum(u32)) {
     /// # Account references
     ///   0. `[WRITE, SIGNER]` Funding account
     ///   1. `[WRITE]` Created account
-    ///   2. `[SIGNER]` (optional) Base account; the account matching the base sol.PublicKey below must be
+    ///   2. `[SIGNER]` (optional) Base account; the account matching the base PublicKey below must be
     ///                          provided as a signer, but may be the same as the funding account
     ///                          and provided as account 0
     create_account_with_seed: struct {
         /// Base public key
-        base: sol.PublicKey,
-        /// String of ASCII chars, no longer than `sol.PublicKey.max_seed_length`
+        base: PublicKey,
+        /// String of ASCII chars, no longer than `PublicKey.max_seed_length`
         seed: []const u8,
         /// Number of lamports to transfer to the new account
         lamports: u64,
         /// Number of bytes of memory to allocate
         space: u64,
         /// Owner program account address
-        owner_id: sol.PublicKey,
+        owner_id: PublicKey,
     },
     /// Consumes a stored nonce, replacing it with a successor
     ///
@@ -170,20 +174,20 @@ pub const Instruction = union(enum(u32)) {
     ///   1. `[]` RecentBlockhashes sysvar
     ///   2. `[]` Rent sysvar
     ///
-    /// The `sol.PublicKey` parameter specifies the entity authorized to execute nonce
+    /// The `PublicKey` parameter specifies the entity authorized to execute nonce
     /// instruction on the account
     ///
     /// No signatures are required to execute this instruction, enabling derived
     /// nonce account addresses
-    initialize_nonce_account: sol.PublicKey,
+    initialize_nonce_account: PublicKey,
     /// Change the entity authorized to execute nonce instructions on the account
     ///
     /// # Account references
     ///   0. `[WRITE]` Nonce account
     ///   1. `[SIGNER]` Nonce authority
     ///
-    /// The `sol.PublicKey` parameter identifies the entity to authorize
-    authorize_nonce_account: sol.PublicKey,
+    /// The `PublicKey` parameter identifies the entity to authorize
+    authorize_nonce_account: PublicKey,
     /// Allocate space in a (possibly new) account without funding
     ///
     /// # Account references
@@ -200,13 +204,13 @@ pub const Instruction = union(enum(u32)) {
     ///   1. `[SIGNER]` Base account
     allocate_with_seed: struct {
         /// Base public key
-        base: sol.PublicKey,
-        /// String of ASCII chars, no longer than `sol.PublicKey.max_seed_len`
+        base: PublicKey,
+        /// String of ASCII chars, no longer than `PublicKey.max_seed_len`
         seed: []const u8,
         /// Number of bytes of memory to allocate
         space: u64,
         /// Owner program account
-        owner_id: sol.PublicKey,
+        owner_id: PublicKey,
     },
     /// Assign account to a program based on a seed
     ///
@@ -215,11 +219,11 @@ pub const Instruction = union(enum(u32)) {
     ///   1. `[SIGNER]` Base account
     assign_with_seed: struct {
         /// Base public key
-        base: sol.PublicKey,
-        /// String of ASCII chars, no longer than `sol.PublicKey.max_Seed_len`
+        base: PublicKey,
+        /// String of ASCII chars, no longer than `PublicKey.max_Seed_len`
         seed: []const u8,
         /// Owner program account
-        owner_id: sol.PublicKey,
+        owner_id: PublicKey,
     },
     /// Transfer lamports from a derived address
     ///
@@ -233,7 +237,7 @@ pub const Instruction = union(enum(u32)) {
         /// Seed to use to derive the funding accout address
         from_seed: []const u8,
         /// Owner to use to derive the funding account address
-        from_owner: sol.PublicKey,
+        from_owner: PublicKey,
     },
 };
 
@@ -247,7 +251,7 @@ test "SystemProgram.Instruction: serialize and deserialize" {
                 .create_account = .{
                     .lamports = 1586880,
                     .space = 100,
-                    .owner_id = sol.system_program_id,
+                    .owner_id = id,
                 },
             },
         }) |payload| {

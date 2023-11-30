@@ -2,7 +2,7 @@ const std = @import("std");
 const program = @import("program.zig");
 
 const test_paths = [_][]const u8{
-    "SystemProgram.zig",
+    "system_program.zig",
     "base58/base58.zig",
     "metaplex/metaplex.zig",
     "public_key.zig",
