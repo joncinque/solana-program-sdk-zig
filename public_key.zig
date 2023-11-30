@@ -230,14 +230,15 @@ pub const PublicKey = extern struct {
     }
 };
 
-// TODO(kenta): fix tests
-// test "public_key: comptime create program address" {
-//     const address = PublicKey.comptimeCreateProgramAddress(.{ "hello", &.{255} }, sol.system_program_id);
-//     try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{}", .{address});
-// }
+test "public_key: comptime create program address" {
+    const id = comptime PublicKey.comptimeFromBase58("11111111111111111111111111111111");
+    const address = comptime PublicKey.comptimeCreateProgramAddress(.{ "hello", &.{255} }, id);
+    try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{}", .{address});
+}
 
-// test "public_key: comptime find program address" {
-//     const pda = PublicKey.comptimeFindProgramAddress(.{"hello"}, sol.system_program_id);
-//     try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{}", .{pda.address});
-//     try testing.expectEqual(@as(u8, 255), pda.bump_seed[0]);
-// }
+test "public_key: comptime find program address" {
+    const id = comptime PublicKey.comptimeFromBase58("11111111111111111111111111111111");
+    const pda = comptime PublicKey.comptimeFindProgramAddress(.{"hello"}, id);
+    try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{}", .{pda.address});
+    try comptime testing.expectEqual(@as(u8, 255), pda.bump_seed[0]);
+}
