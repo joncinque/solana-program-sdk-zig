@@ -6,27 +6,29 @@
 
 ```console
 git submodule init
-git submodule add https://github.com/lithdew/solana-zig.git sol
+git submodule add https://github.com/joncinque/solana-zig.git sol
 git submodule update --init --recursive
 ```
 
-2. In build.zig:
+2. In your build.zig, add the modules that you want, or use the helpers in `build.zig`:
 
 ```zig
 const std = @import("std");
 const sol = @import("sol/build.zig");
 
-// Assume 'step' is a *std.build.LibExeObjStep, and 'sol/' is the directory in
-// which this repository is located within your project.
+// Assume:
+// * `build` is the *std.build.Builder`
+// * `program` is a `*std.build.Step.Compile` created with `build.addSharedLibrary(...)` and all of your program files
+// * 'sol/' is the directory with this repository within your project
 
-const sol_pkgs = sol.Packages("sol/");
+const sol_modules = sol.allSolModules(build, "sol/");
 
-inline for (@typeInfo(sol_pkgs).Struct.decls) |field| {
-    step.addPackage(@field(sol_pkgs, field.name));
+inline for (sol_modules) |package| {
+    program.addModule(package.name, package.module);
 }
 ```
 
-## Example
+## Example Program
 
 1. Setup build.zig:
 
@@ -37,14 +39,13 @@ const sol = @import("sol/build.zig");
 const sol_pkgs = sol.Packages("sol/");
 
 pub fn build(b: *std.build.Builder) !void {
-    const program = b.addSharedLibrary("helloworld", "main.zig", .unversioned);
-    inline for (@typeInfo(sol_pkgs).Struct.decls) |field| {
-        program.addPackage(@field(sol_pkgs, field.name));
-    }
-    program.install();
-
-    try sol.linkSolanaProgram(b, program);
-    try sol.generateProgramKeypair(b, program);
+    const program = b.addSharedLibrary(.{
+        .name = "helloworld",
+        .root_source_file = .{ .path = "src/main.zig"},
+        .optimize = .ReleaseSmall,
+        .target = sol.sbf_target,
+    });
+    try sol.buildProgram(b, program, "sol/");
 }
 ```
 
@@ -75,3 +76,12 @@ Signature: 52rgcLosCjRySoQq5MQLpoKg4JacCdidPNXPWbJhTE1LJR2uzFgp93Q7Dq1hQrcyc6nwr
 $ solana program deploy -ud zig-out/lib/libhelloworld.so
 Program Id: FHGeakPPYgDWomQT6Embr4mVW5DSoygX6TaxQXdgwDYU
 ```
+
+## Targets available
+
+The helpers in build.zig contain various Solana targets. Here are their analogues
+to the Rust build tools:
+
+* `sbf_target` -> `cargo build-sbf`
+* `bpf_target` -> `cargo build-bpf`
+* `sbfv2_target` -> `cargo build-sbf --arch sbfv2`
