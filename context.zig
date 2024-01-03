@@ -4,6 +4,36 @@ const Account = @import("account.zig").Account;
 const allocator = @import("allocator.zig");
 const PublicKey = @import("public_key.zig").PublicKey;
 
+const UnalignedAccountPtr: type = *align(1) Account.Data;
+const AccountOrIndex = union(enum) { account: Account, index: usize };
+
+const AccountIterator = struct {
+    num_accounts: usize,
+    i: usize,
+    ptr: [*]u8,
+    fn next(self: *AccountIterator) ?AccountOrIndex {
+        if (self.i < self.num_accounts) {
+            self.i += 1;
+            const data: UnalignedAccountPtr = @ptrCast(self.ptr);
+            if (data.duplicate_index != std.math.maxInt(u8)) {
+                self.ptr += @sizeOf(usize);
+                return AccountOrIndex { .index = data.duplicate_index };
+            }
+
+            const start = @intFromPtr(self.ptr);
+            self.ptr += @sizeOf(Account.Data);
+            self.ptr = @as([*]u8, @ptrFromInt(std.mem.alignForward(usize, @intFromPtr(self.ptr + data.data_len + 10 * 1024), @alignOf(usize))));
+            self.ptr += @sizeOf(u64);
+            const end = @intFromPtr(self.ptr);
+
+            const account = .{ .ptr = @as(*Account.Data, @ptrCast(@alignCast(data))), .len = end - start };
+            return AccountOrIndex { .account = account };
+        } else {
+            return null;
+        }
+    }
+};
+
 pub const Context = struct {
     num_accounts: usize,
     accounts: [*]u8,
@@ -18,17 +48,13 @@ pub const Context = struct {
 
         const accounts: [*]u8 = ptr;
 
-        var i: usize = 0;
-        while (i < num_accounts) : (i += 1) {
-            const account: *align(1) Account.Data = @as(*align(1) Account.Data, @ptrCast(ptr));
-            if (account.duplicate_index != std.math.maxInt(u8)) {
-                ptr += @sizeOf(usize);
-                continue;
-            }
-            ptr += @sizeOf(Account.Data);
-            ptr = @as([*]u8, @ptrFromInt(std.mem.alignForward(@intFromPtr(ptr + account.data_len + 10 * 1024), @alignOf(usize))));
-            ptr += @sizeOf(u64);
-        }
+        var iter = AccountIterator {
+            .num_accounts = num_accounts,
+            .ptr = ptr,
+            .i = 0,
+        };
+        while (iter.next()) |_| {}
+        ptr = iter.ptr;
 
         const data_len = std.math.cast(usize, std.mem.bytesToValue(u64, ptr[0..@sizeOf(u64)])) orelse return error.DataTooLarge;
         ptr += @sizeOf(u64);
@@ -45,6 +71,23 @@ pub const Context = struct {
             .data = data,
             .program_id = program_id,
         };
+    }
+
+    pub fn loadRawAccounts(self: Context, gpa: std.mem.Allocator) !std.ArrayList(Account){
+        var accounts = try std.ArrayList(Account).initCapacity(gpa, self.num_accounts);
+        errdefer accounts.deinit();
+        var iter = AccountIterator {
+            .num_accounts = self.num_accounts,
+            .ptr = self.accounts,
+            .i = 0,
+        };
+        while (iter.next()) |maybe_account| {
+            switch (maybe_account) {
+                .account => |account| try accounts.append(account),
+                .index => |index| try accounts.append(accounts.items[index]),
+            }
+        }
+        return accounts;
     }
 
     pub fn loadAccountsAlloc(self: Context, comptime Accounts: type, gpa: std.mem.Allocator) !*Accounts {
