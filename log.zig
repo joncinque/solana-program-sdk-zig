@@ -28,3 +28,14 @@ pub fn print(comptime format: []const u8, args: anytype) void {
 
     return log(message);
 }
+
+pub inline fn logComputeUnits() void {
+    if (bpf.is_bpf_program) {
+        const Syscall = struct {
+            extern fn sol_log_compute_units_() callconv(.C) void;
+        };
+        Syscall.sol_log_compute_units_();
+    } else {
+        std.debug.print("Compute units not available\n");
+    }
+}
