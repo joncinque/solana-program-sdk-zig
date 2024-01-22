@@ -5,6 +5,10 @@ const heap_length = 32 * 1024;
 
 pub const allocator: std.mem.Allocator = @constCast(&ReverseFixedBufferAllocator.comptimeInit(heap_start[0..heap_length])).allocator();
 
+// Just like std.heap.FixedBufferAllocator, with a few key differences:
+// * Allocations start at the high address and go down
+// * The current end index used by allocations is stored in the final `usize`
+// bytes of the provided buffer, allowing it to be used in `comptime` contexts
 const ReverseFixedBufferAllocator = struct {
     buffer: []u8,
 
@@ -37,8 +41,11 @@ const ReverseFixedBufferAllocator = struct {
             .ptr = self,
             .vtable = &.{
                 .alloc = ReverseFixedBufferAllocator.alloc,
-                .resize = std.mem.Allocator.noResize,
                 .free = ReverseFixedBufferAllocator.free,
+                // For an allocator that grows from high addresses to low, it
+                // isn't possible to resize without rewriting all the memory at
+                // the new lower address, so we just omit it here
+                .resize = std.mem.Allocator.noResize,
             },
         };
     }
@@ -70,41 +77,6 @@ const ReverseFixedBufferAllocator = struct {
         return @ptrCast(self.buffer[new_end_index .. new_end_index + n]);
     }
 
-    fn resize(
-        ctx: *anyopaque,
-        buf: []u8,
-        log2_buf_align: u8,
-        new_size: usize,
-        return_address: usize,
-    ) bool {
-        const self: *ReverseFixedBufferAllocator = @ptrCast(@alignCast(ctx));
-        _ = return_address;
-
-        if (!self.isLastAllocation(buf)) {
-            if (new_size > buf.len) return false;
-            return true;
-        }
-
-        const ptr_align = @as(usize, 1) << @as(std.mem.Allocator.Log2Align, @intCast(log2_buf_align));
-
-        if (new_size <= buf.len) {
-            const sub = buf.len - new_size;
-            var new_end_index = self.end_index().* + sub;
-            new_end_index &= ~(ptr_align - 1);
-            self.end_index().* = new_end_index;
-            return true;
-        }
-
-        const add = new_size - buf.len;
-        if (add > self.end_index().*) {
-            return false;
-        }
-        var new_end_index = self.end_index().* - add;
-        new_end_index &= ~(ptr_align - 1);
-        self.end_index().* = new_end_index;
-        return true;
-    }
-
     fn free(
         ctx: *anyopaque,
         buf: []u8,
@@ -122,9 +94,9 @@ const ReverseFixedBufferAllocator = struct {
 };
 
 const test_size = 800000 * @sizeOf(u64);
-var test_bump_allocator_memory: [test_size]u8 = undefined;
-test "bump_allocator" {
-    var bump_allocator = ReverseFixedBufferAllocator.init(&test_bump_allocator_memory);
+var test_fixed_buffer: [test_size]u8 = undefined;
+test "ReverseFixedBufferAllocator" {
+    var bump_allocator = ReverseFixedBufferAllocator.init(&test_fixed_buffer);
 
     try std.heap.testAllocator(bump_allocator.allocator());
     try std.heap.testAllocatorAligned(bump_allocator.allocator());
