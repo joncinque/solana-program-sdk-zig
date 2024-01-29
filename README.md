@@ -1,5 +1,10 @@
 # solana-zig
 
+Write Solana on-chain programs in Zig!
+
+Requires a Solana-compatible Zig compiler, which can be built with
+[zig-bootstrap-solana](https://github.com/joncinque/zig-bootstrap-solana).
+
 ## Setup
 
 1. Add this repository as a submodule to your project:
