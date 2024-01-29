@@ -4,3 +4,6 @@
 [submodule "bincode"]
 	path = bincode
 	url = https://github.com/joncinque/bincode-zig.git
+[submodule "lib/zig-clap"]
+	path = lib/zig-clap
+	url = https://github.com/Hejsil/zig-clap

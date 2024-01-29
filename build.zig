@@ -1,4 +1,5 @@
 const std = @import("std");
+const generateKeypairRunStep = @import("base58/build.zig").generateKeypairRunStep;
 
 const test_paths = [_][]const u8{
     "metaplex/metaplex.zig",
@@ -78,7 +79,12 @@ pub fn buildProgram(b: *std.build.Builder, program: *std.build.LibExeObjStep, co
     b.installArtifact(program);
 
     try linkSolanaProgram(b, program);
-    //try @import("base58/build.zig").generateProgramKeypair(b, program);
+
+    const program_name = program.out_filename[0 .. program.out_filename.len - std.fs.path.extension(program.out_filename).len];
+    const path = b.fmt("{s}-keypair.json", .{program_name});
+    const lib_path = b.getInstallPath(.lib, path);
+    const run_step = try generateKeypairRunStep(b, base_dir ++ "base58/", lib_path);
+    program.step.dependOn(&run_step.step);
 }
 
 pub const sbf_target: std.zig.CrossTarget = .{
