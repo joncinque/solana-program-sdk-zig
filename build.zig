@@ -23,6 +23,13 @@ pub fn build(b: *std.build.Builder) !void {
     }
 }
 
+pub fn addSolModules(b: *std.build.Builder, program: *std.build.Step.Compile, comptime base_dir: []const u8) void {
+    const sol_modules = allSolModules(b, base_dir);
+    inline for (sol_modules) |package| {
+        program.addModule(package.name, package.module);
+    }
+}
+
 pub fn allSolModules(b: *std.build.Builder, comptime base_dir: []const u8) [6]std.build.ModuleDependency {
     const base58 = .{ .name = "base58", .module = b.createModule(.{
         .source_file = .{ .path = base_dir ++ "base58/base58.zig" },
@@ -71,11 +78,7 @@ pub fn allSolModules(b: *std.build.Builder, comptime base_dir: []const u8) [6]st
 }
 
 pub fn buildProgram(b: *std.build.Builder, program: *std.build.LibExeObjStep, comptime base_dir: []const u8) !void {
-    const sol_modules = allSolModules(b, base_dir);
-
-    inline for (sol_modules) |package| {
-        program.addModule(package.name, package.module);
-    }
+    addSolModules(b, program, base_dir);
     b.installArtifact(program);
 
     try linkSolanaProgram(b, program);
