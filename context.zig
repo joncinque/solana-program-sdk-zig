@@ -17,7 +17,7 @@ const AccountIterator = struct {
             const data: UnalignedAccountPtr = @ptrCast(self.ptr);
             if (data.duplicate_index != std.math.maxInt(u8)) {
                 self.ptr += @sizeOf(usize);
-                return AccountOrIndex { .index = data.duplicate_index };
+                return AccountOrIndex{ .index = data.duplicate_index };
             }
 
             const start = @intFromPtr(self.ptr);
@@ -27,7 +27,7 @@ const AccountIterator = struct {
             const end = @intFromPtr(self.ptr);
 
             const account = .{ .ptr = @as(*Account.Data, @ptrCast(@alignCast(data))), .len = end - start };
-            return AccountOrIndex { .account = account };
+            return AccountOrIndex{ .account = account };
         } else {
             return null;
         }
@@ -48,7 +48,7 @@ pub const Context = struct {
 
         const accounts: [*]u8 = ptr;
 
-        var iter = AccountIterator {
+        var iter = AccountIterator{
             .num_accounts = num_accounts,
             .ptr = ptr,
             .i = 0,
@@ -73,10 +73,10 @@ pub const Context = struct {
         };
     }
 
-    pub fn loadRawAccounts(self: Context, gpa: std.mem.Allocator) !std.ArrayList(Account){
+    pub fn loadRawAccounts(self: Context, gpa: std.mem.Allocator) !std.ArrayList(Account) {
         var accounts = try std.ArrayList(Account).initCapacity(gpa, self.num_accounts);
         errdefer accounts.deinit();
-        var iter = AccountIterator {
+        var iter = AccountIterator{
             .num_accounts = self.num_accounts,
             .ptr = self.accounts,
             .i = 0,
