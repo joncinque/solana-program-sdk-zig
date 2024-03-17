@@ -113,32 +113,30 @@ pub const Alphabet = struct {
     }
 
     pub fn encode(comptime self: base58.Alphabet, encoded: []u8, decoded: []const u8) []const u8 {
-        @memset(encoded, 0);
-
         var len: usize = 0;
         for (decoded) |r| {
-            var val: u32 = r;
-            for (encoded[0..len], 0..) |b, i| {
-                val += @as(u32, b) << 8;
-                encoded[i] = @as(u8, @intCast(val % 58));
+            var val: usize = r;
+            for (encoded[0..len]) |*b| {
+                val += @as(usize, b.*) << 8;
+                b.* = @intCast(val % 58);
                 val /= 58;
             }
             while (val > 0) : (val /= 58) {
-                encoded[len] = @as(u8, @intCast(val % 58));
+                encoded[len] = @intCast(val % 58);
                 len += 1;
             }
-        }
-
-        for (encoded[0..len], 0..) |b, i| {
-            encoded[i] = self.character_map[b];
         }
 
         for (decoded) |r| {
             if (r != 0) {
                 break;
             }
-            encoded[len] = self.character_map[0];
+            encoded[len] = 0;
             len += 1;
+        }
+
+        for (encoded[0..len], 0..) |b, i| {
+            encoded[i] = self.character_map[b];
         }
 
         std.mem.reverse(u8, encoded[0..len]);
