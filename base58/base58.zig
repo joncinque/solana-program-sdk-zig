@@ -149,16 +149,14 @@ pub const Alphabet = struct {
             return error.ZeroLengthString;
         }
 
-        @memset(decoded, 0);
-
         var len: usize = 0;
         for (encoded) |r| {
-            var val: u32 = self.digits_map[r];
+            var val: usize = self.digits_map[r];
             if (val == 255) {
                 return error.InvalidBase58Digit;
             }
             for (decoded[0..len], 0..) |b, i| {
-                val += @as(u32, b) * 58;
+                val += @as(usize, b) * 58;
                 decoded[i] = @as(u8, @truncate(val));
                 val >>= 8;
             }
