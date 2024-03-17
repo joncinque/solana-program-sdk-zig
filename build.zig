@@ -87,7 +87,7 @@ pub fn buildProgram(b: *std.build.Builder, program: *std.build.LibExeObjStep, co
     const path = b.fmt("{s}-keypair.json", .{program_name});
     const lib_path = b.getInstallPath(.lib, path);
     const run_step = try generateKeypairRunStep(b, base_dir ++ "base58/", lib_path);
-    program.step.dependOn(&run_step.step);
+    run_step.step.dependOn(&program.step);
 }
 
 pub const sbf_target: std.zig.CrossTarget = .{
