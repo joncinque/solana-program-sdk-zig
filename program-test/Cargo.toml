@@ -1,0 +1,15 @@
+[package]
+authors = ["Solana Labs Maintainers <maintainers@solanalabs.com>"]
+description = "Solana-Zig Helloworld Program Test"
+edition = "2021"
+license = "Apache-2.0"
+name = "solana-zig-helloworld-program-test"
+repository = "https://github.com/solana-labs/solana-program-library"
+version = "0.0.1"
+
+[dev-dependencies]
+num_enum = "0.7"
+solana-program = ">=1.18.2,<=2"
+solana-program-test = ">=1.18.2,<=2"
+solana-sdk = ">=1.18.2,<=2"
+test-case = "3"
