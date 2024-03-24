@@ -3,4 +3,5 @@
 .envrc
 
 zig-cache/
+zig-global-cache/
 zig-out/

@@ -30,7 +30,7 @@ jobs:
 
     - name: Test library
       shell: bash
-      run: $ZIG_SOLANA_DIR/zig build test --global-cache-dir zig-global-cache --summary all
+      run: $ZIG_SOLANA_DIR/zig build test --global-cache-dir zig-global-cache --summary all -j1
   programs:
     name: Build and test programs
     runs-on: ubuntu-latest
