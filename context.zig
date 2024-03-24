@@ -110,7 +110,7 @@ pub const Context = struct {
         comptime var last_field_is_slice = false;
 
         comptime {
-            inline for (@typeInfo(Accounts).Struct.fields, 0..) |field, i| {
+            for (@typeInfo(Accounts).Struct.fields, 0..) |field, i| {
                 switch (field.type) {
                     Account => min_accounts += 1,
                     []Account => {

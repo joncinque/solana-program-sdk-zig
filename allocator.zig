@@ -152,7 +152,7 @@ const ReverseFixedBufferAllocator = struct {
 
     pub fn init(buffer: []u8) ReverseFixedBufferAllocator {
         const cutoff = buffer.len - @sizeOf(usize);
-        var end = @as(*usize, @ptrCast(@alignCast(buffer[cutoff..])));
+        const end = @as(*usize, @ptrCast(@alignCast(buffer[cutoff..])));
         end.* = cutoff;
         return ReverseFixedBufferAllocator{
             .buffer = buffer,
@@ -184,7 +184,7 @@ const ReverseFixedBufferAllocator = struct {
         const self: *ReverseFixedBufferAllocator = @ptrCast(@alignCast(ctx));
         if (self.end_index().* == 0) {
             const cutoff = self.buffer.len - @sizeOf(usize);
-            var end = @as(*usize, @ptrCast(@alignCast(self.buffer[cutoff..])));
+            const end = @as(*usize, @ptrCast(@alignCast(self.buffer[cutoff..])));
             end.* = cutoff;
         }
         const ptr_align = @as(usize, 1) << @as(std.mem.Allocator.Log2Align, @intCast(log2_ptr_align));

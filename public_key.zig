@@ -155,12 +155,10 @@ pub const PublicKey = extern struct {
             comptime var seeds_index = 0;
             inline while (seeds_index < seeds.len) : (seeds_index += 1) {
                 const Seed = @TypeOf(seeds[seeds_index]);
-                if (comptime std.meta.trait.isZigString(Seed)) {
-                    seeds_array[seeds_index] = seeds[seeds_index];
-                } else if (comptime Seed == PublicKey) {
+                if (comptime Seed == PublicKey) {
                     seeds_array[seeds_index] = &seeds[seeds_index].bytes;
                 } else {
-                    @compileError("Unknown seed type '" ++ @typeName(Seed) ++ "'");
+                    seeds_array[seeds_index] = seeds[seeds_index];
                 }
             }
 
@@ -188,12 +186,10 @@ pub const PublicKey = extern struct {
         comptime var seeds_index = 0;
         inline while (seeds_index < seeds.len) : (seeds_index += 1) {
             const Seed = @TypeOf(seeds[seeds_index]);
-            if (comptime std.meta.trait.isZigString(Seed)) {
-                seeds_with_bump[seeds_index] = seeds[seeds_index];
-            } else if (comptime Seed == PublicKey) {
+            if (comptime Seed == PublicKey) {
                 seeds_with_bump[seeds_index] = &seeds[seeds_index].bytes;
             } else {
-                @compileError("Unknown seed type '" ++ @typeName(Seed) ++ "'");
+                seeds_with_bump[seeds_index] = seeds[seeds_index];
             }
         }
 
