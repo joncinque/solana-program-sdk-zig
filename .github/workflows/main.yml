@@ -1,0 +1,71 @@
+name: Build library and test programs
+
+on: [pull_request, push]
+
+env:
+  ZIG_SOLANA_VERSION: v1.39
+  ZIG_SOLANA_DIR: zig-x86_64-linux-gnu-baseline
+
+jobs:
+  library:
+    name: Build and test library
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - uses: actions/cache@v4
+      with:
+        path: $ZIG_SOLANA_DIR
+        key: zig-solana-$ZIG_SOLANA_VERSION
+
+    - name: Download zig-solana compiler
+      shell: bash
+      run: |
+        ZIG_SOLANA_RELEASE_URL=https://github.com/joncinque/zig-bootstrap-solana/releases/download/solana-$ZIG_SOLANA_VERSION
+        ZIG_SOLANA_TAR=zig-x86_64-linux-gnu.tar.bz2
+        curl --proto '=https' --tlsv1.2 -sSfOL $ZIG_SOLANA_RELEASE_URL/$ZIG_SOLANA_TAR
+        tar -xjf $ZIG_SOLANA_TAR
+
+    - name: Test library
+      shell: bash
+      run: $ZIG_SOLANA_DIR/zig build test --global-cache-dir zig-global-cache --summary all
+  programs:
+    name: Build and test programs
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          $ZIG_SOLANA_DIR
+        key: zig-solana-${{ hashFiles('./program-test/Cargo.lock') }}-$ZIG_SOLANA_VERSION
+
+    - name: Download zig-solana compiler
+      shell: bash
+      run: |
+        ZIG_SOLANA_RELEASE_URL=https://github.com/joncinque/zig-bootstrap-solana/releases/download/solana-$ZIG_SOLANA_VERSION
+        ZIG_SOLANA_TAR=zig-x86_64-linux-gnu.tar.bz2
+        curl --proto '=https' --tlsv1.2 -sSfOL $ZIG_SOLANA_RELEASE_URL/$ZIG_SOLANA_TAR
+        tar -xjf $ZIG_SOLANA_TAR
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: 1.76.0
+
+    - name: Install build deps
+      shell: bash
+      run: |
+        sudo apt update
+        sudo apt install protobuf-compiler -y
+
+    - name: Build and test program
+      shell: bash
+      run: cd program-test && ./test.sh ../$ZIG_SOLANA_DIR/zig
