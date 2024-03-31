@@ -9,7 +9,11 @@ env:
 jobs:
   library:
     name: Build and test library
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -21,6 +25,7 @@ jobs:
         key: zig-solana-$ZIG_SOLANA_VERSION
 
     - name: Download zig-solana compiler
+      shell: bash
       run: ZIG_SOLANA_VERSION=v1.39 ./install-zig-solana.sh $ZIG_SOLANA_DIR
 
     - name: Test library (with retries, revert with 0.12)
@@ -33,7 +38,11 @@ jobs:
 
   programs:
     name: Build and test programs
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -48,6 +57,7 @@ jobs:
         key: zig-solana-${{ hashFiles('./program-test/Cargo.lock') }}-$ZIG_SOLANA_VERSION
 
     - name: Download zig-solana compiler
+      shell: bash
       run: ZIG_SOLANA_VERSION=v1.39 ./install-zig-solana.sh $ZIG_SOLANA_DIR
 
     - name: Install Rust

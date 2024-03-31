@@ -15,7 +15,7 @@ output_dir="$(mkdir -p "$output_dir"; cd "$output_dir"; pwd)"
 cd $output_dir
 
 arch=$(uname -m)
-case $(uname -s) in
+case $(uname -s | cut -c1-7) in
 "Linux")
   os="linux"
   abi="gnu"
@@ -24,7 +24,7 @@ case $(uname -s) in
   os="macos"
   abi="none"
   ;;
-"Windows")
+"Windows" | "MINGW64")
   os="windows"
   abi="gnu"
   ;;
