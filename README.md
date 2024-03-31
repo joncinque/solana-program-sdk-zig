@@ -14,6 +14,14 @@ Requires a Solana-compatible Zig compiler, which can be built with
 It's also possible to download an appropriate compiler for your system from the
 [GitHub Releases](https://github.com/joncinque/zig-bootstrap-solana/releases).
 
+You can run the convenience script in this repo to download the compiler to
+`zig-solana`:
+
+```
+./install-zig-solana.sh
+./zig-solana/zig build test
+```
+
 ## How to use
 
 1. Add this repository as a submodule to your project:
@@ -72,10 +80,16 @@ export fn entrypoint(_: [*]u8) callconv(.C) u64 {
 }
 ```
 
-4. Build and deploy your program on Solana devnet:
+4. Download the zig-solana compiler:
 
 ```console
-$ path/to/solana-zig/compiler/zig build --summary all
+$ ./sol/install-zig-solana.sh
+```
+
+5. Build and deploy your program on Solana devnet:
+
+```console
+$ ./zig-solana/zig build --summary all
 Program ID: FHGeakPPYgDWomQT6Embr4mVW5DSoygX6TaxQXdgwDYU
 
 $ solana airdrop -ud 1
@@ -107,7 +121,7 @@ The unit tests require the solana-zig compiler as mentioned in the prerequisites
 You can run all unit tests for the library with:
 
 ```console
-/path/to/your/solana-zig/compiler/zig build test
+./zig-solana/zig build test
 ```
 
 ## Integration tests
