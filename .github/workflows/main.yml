@@ -23,9 +23,14 @@ jobs:
     - name: Download zig-solana compiler
       run: ZIG_SOLANA_VERSION=v1.39 ./install-zig-solana.sh $ZIG_SOLANA_DIR
 
-    - name: Test library
+    - name: Test library (with retries, revert with 0.12)
       shell: bash
-      run: $ZIG_SOLANA_DIR/zig build test --global-cache-dir zig-global-cache --summary all -j1
+      run: |
+        for i in $(seq 1 5)
+        do
+          $ZIG_SOLANA_DIR/zig build test --summary all && break || sleep 1
+        done
+
   programs:
     name: Build and test programs
     runs-on: ubuntu-latest

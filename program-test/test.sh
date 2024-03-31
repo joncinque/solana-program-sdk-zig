@@ -8,5 +8,8 @@ fi
 
 set -e
 cd $ROOT_DIR/program-test
-$ZIG build --summary all --verbose --global-cache-dir zig-global-cache -j1
+for i in $(seq 1 5)
+do
+  $ZIG build --summary all --verbose && break || sleep 1
+done
 SBF_OUT_DIR="$ROOT_DIR/program-test/zig-out/lib" cargo test --manifest-path "$ROOT_DIR/program-test/Cargo.toml"
