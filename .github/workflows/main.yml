@@ -3,8 +3,8 @@ name: Build library and test programs
 on: [pull_request, push]
 
 env:
-  ZIG_SOLANA_VERSION: v1.39
-  ZIG_SOLANA_DIR: zig-solana
+  SOLANA_ZIG_VERSION: v1.39
+  SOLANA_ZIG_DIR: solana-zig
 
 jobs:
   library:
@@ -21,19 +21,19 @@ jobs:
 
     - uses: actions/cache@v4
       with:
-        path: $ZIG_SOLANA_DIR
-        key: zig-solana-$ZIG_SOLANA_VERSION
+        path: $SOLANA_ZIG_DIR
+        key: solana-zig-$SOLANA_ZIG_VERSION
 
-    - name: Download zig-solana compiler
+    - name: Download solana-zig compiler
       shell: bash
-      run: ZIG_SOLANA_VERSION=v1.39 ./install-zig-solana.sh $ZIG_SOLANA_DIR
+      run: SOLANA_ZIG_VERSION=v1.39 ./install-solana-zig.sh $SOLANA_ZIG_DIR
 
     - name: Test library (with retries, revert with 0.12)
       shell: bash
       run: |
         for i in $(seq 1 5)
         do
-          $ZIG_SOLANA_DIR/zig build test --summary all && break || sleep 1
+          $SOLANA_ZIG_DIR/zig build test --summary all && break || sleep 1
         done
 
   programs:
@@ -53,12 +53,12 @@ jobs:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
-          $ZIG_SOLANA_DIR
-        key: zig-solana-${{ hashFiles('./program-test/Cargo.lock') }}-$ZIG_SOLANA_VERSION
+          $SOLANA_ZIG_DIR
+        key: solana-zig-${{ hashFiles('./program-test/Cargo.lock') }}-$SOLANA_ZIG_VERSION
 
-    - name: Download zig-solana compiler
+    - name: Download solana-zig compiler
       shell: bash
-      run: ZIG_SOLANA_VERSION=v1.39 ./install-zig-solana.sh $ZIG_SOLANA_DIR
+      run: SOLANA_ZIG_VERSION=v1.39 ./install-solana-zig.sh $SOLANA_ZIG_DIR
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@master

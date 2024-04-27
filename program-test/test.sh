@@ -3,7 +3,7 @@
 ZIG="$1"
 ROOT_DIR="$(cd "$(dirname "$0")"/..; pwd)"
 if [[ -z "$ZIG" ]]; then
-  ZIG="$ROOT_DIR/zig-solana/zig"
+  ZIG="$ROOT_DIR/solana-zig/zig"
 fi
 
 set -e

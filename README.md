@@ -1,4 +1,4 @@
-# solana-zig
+# solana-zig-sdk
 
 Write Solana on-chain programs in Zig!
 
@@ -9,17 +9,17 @@ which also provides tests and a CLI.
 ## Prerequisites
 
 Requires a Solana-compatible Zig compiler, which can be built with
-[zig-bootstrap-solana](https://github.com/joncinque/zig-bootstrap-solana).
+[solana-zig-bootstrap](https://github.com/joncinque/solana-zig-bootstrap).
 
 It's also possible to download an appropriate compiler for your system from the
-[GitHub Releases](https://github.com/joncinque/zig-bootstrap-solana/releases).
+[GitHub Releases](https://github.com/joncinque/solana-zig-bootstrap/releases).
 
 You can run the convenience script in this repo to download the compiler to
-`zig-solana`:
+`solana-zig`:
 
 ```
-./install-zig-solana.sh
-./zig-solana/zig build test
+./install-solana-zig.sh
+./solana-zig/zig build test
 ```
 
 ## How to use
@@ -80,16 +80,16 @@ export fn entrypoint(_: [*]u8) callconv(.C) u64 {
 }
 ```
 
-4. Download the zig-solana compiler:
+4. Download the solana-zig compiler:
 
 ```console
-$ ./sol/install-zig-solana.sh
+$ ./sol/install-solana-zig.sh
 ```
 
 5. Build and deploy your program on Solana devnet:
 
 ```console
-$ ./zig-solana/zig build --summary all
+$ ./solana-zig/zig build --summary all
 Program ID: FHGeakPPYgDWomQT6Embr4mVW5DSoygX6TaxQXdgwDYU
 
 $ solana airdrop -ud 1
@@ -121,7 +121,7 @@ The unit tests require the solana-zig compiler as mentioned in the prerequisites
 You can run all unit tests for the library with:
 
 ```console
-./zig-solana/zig build test
+./solana-zig/zig build test
 ```
 
 ## Integration tests

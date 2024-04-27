@@ -2,6 +2,6 @@
 .direnv/
 .envrc
 
-zig-solana/
+solana-zig/
 zig-cache/
 zig-out/
