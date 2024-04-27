@@ -3,7 +3,7 @@
 Write Solana on-chain programs in Zig!
 
 If you want a more complete program example, please see the
-[`solana-zig-helloworld` repo](https://github.com/joncinque/solana-zig-helloworld),
+[`solana-helloworld-zig` repo](https://github.com/joncinque/solana-helloworld-zig),
 which also provides tests and a CLI.
 
 ## Prerequisites

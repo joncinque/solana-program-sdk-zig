@@ -1,10 +1,10 @@
 [package]
-authors = ["Solana Labs Maintainers <maintainers@solanalabs.com>"]
-description = "Solana-Zig Helloworld Program Test"
+authors = ["Jon C <me@jonc.dev>"]
+description = "Solana-SDK Zig Program Test"
 edition = "2021"
 license = "Apache-2.0"
-name = "solana-zig-helloworld-program-test"
-repository = "https://github.com/solana-labs/solana-program-library"
+name = "solana-sdk-zig-program-test"
+repository = "https://github.com/joncinque/solana-sdk-zig"
 version = "0.0.1"
 
 [dev-dependencies]
