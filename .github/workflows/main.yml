@@ -28,16 +28,10 @@ jobs:
       shell: bash
       run: ./install-solana-zig.sh $SOLANA_ZIG_DIR
 
-    - name: Test library (with retries, revert with 0.12)
+    - name: Test library
       shell: bash
       run: |
-        for i in $(seq 1 5)
-        do
-          $SOLANA_ZIG_DIR/zig build test --summary all && break || sleep 1
-          if [[ $i == 5 ]]; then
-            exit 1
-          fi
-        done
+        $SOLANA_ZIG_DIR/zig build test --summary all
 
   programs:
     name: Build and test programs
