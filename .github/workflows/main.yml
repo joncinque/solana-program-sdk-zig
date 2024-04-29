@@ -3,7 +3,7 @@ name: Build library and test programs
 on: [pull_request, push]
 
 env:
-  SOLANA_ZIG_VERSION: v1.39
+  SOLANA_ZIG_VERSION: v1.41
   SOLANA_ZIG_DIR: solana-zig
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
 
     - name: Download solana-zig compiler
       shell: bash
-      run: SOLANA_ZIG_VERSION=v1.39 ./install-solana-zig.sh $SOLANA_ZIG_DIR
+      run: ./install-solana-zig.sh $SOLANA_ZIG_DIR
 
     - name: Test library (with retries, revert with 0.12)
       shell: bash
@@ -61,7 +61,7 @@ jobs:
 
     - name: Download solana-zig compiler
       shell: bash
-      run: SOLANA_ZIG_VERSION=v1.39 ./install-solana-zig.sh $SOLANA_ZIG_DIR
+      run: ./install-solana-zig.sh $SOLANA_ZIG_DIR
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@master
