@@ -21,7 +21,7 @@ fi
 case $(uname -s | cut -c1-7) in
 "Linux")
   os="linux"
-  abi="gnu"
+  abi="musl"
   ;;
 "Darwin")
   os="macos"
