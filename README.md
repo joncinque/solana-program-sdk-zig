@@ -99,7 +99,7 @@ Signature: 52rgcLosCjRySoQq5MQLpoKg4JacCdidPNXPWbJhTE1LJR2uzFgp93Q7Dq1hQrcyc6nwr
 
 882.4039166 SOL
 
-$ solana program deploy -ud zig-out/lib/libprogram_name.so
+$ solana program deploy -ud zig-out/lib/program_name.so
 Program Id: FHGeakPPYgDWomQT6Embr4mVW5DSoygX6TaxQXdgwDYU
 ```
 

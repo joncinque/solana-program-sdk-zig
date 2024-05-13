@@ -14,7 +14,7 @@ mod program {
 }
 
 fn program_test() -> ProgramTest {
-    ProgramTest::new("libpubkey", program::id(), None)
+    ProgramTest::new("pubkey", program::id(), None)
 }
 
 #[tokio::test]
