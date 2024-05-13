@@ -62,7 +62,7 @@ pub fn generateKeypair(path: []const u8, allocator: std.mem.Allocator) !void {
         var keypair_json = std.ArrayList(u8).init(allocator);
         defer keypair_json.deinit();
         try std.json.stringify(keypair.secret_key.bytes, .{}, keypair_json.writer());
-        var file = try cwd.createFile(path, .{ .exclusive = true });
+        var file = try createFileWithRetries(path);
         try file.writeAll(keypair_json.items);
 
         var pubkey_buffer: [bitcoin.getEncodedLengthUpperBound(std.crypto.sign.Ed25519.PublicKey.encoded_length)]u8 = undefined;
@@ -70,4 +70,13 @@ pub fn generateKeypair(path: []const u8, allocator: std.mem.Allocator) !void {
 
         std.debug.print("New keypair pubkey: {s}\n", .{pubkey});
     }
+}
+
+fn createFileWithRetries(path: []const u8) !std.fs.File {
+    const attempts = 5;
+    const cwd = std.fs.cwd();
+    for (0..attempts + 1) |i| {
+        return cwd.createFile(path, .{ .exclusive = true }) catch |err| if (i == attempts) return err else continue;
+    }
+    return error.FileNotFound;
 }
