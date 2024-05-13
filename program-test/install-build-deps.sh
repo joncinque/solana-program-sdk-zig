@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 case $(uname -s | cut -c1-7) in
-"Windows")
+"Windows" | "MINGW64")
   vcpkg install openssl:x64-windows-static-md
   vcpkg integrate install
   choco install protoc
