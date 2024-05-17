@@ -11,7 +11,9 @@ pub usingnamespace @import("build.zig");
 pub usingnamespace @import("clock.zig");
 pub usingnamespace @import("rent.zig");
 pub usingnamespace @import("log.zig");
+pub usingnamespace @import("hash.zig");
 
+pub const blake3 = @import("blake3.zig");
 pub const system_program = @import("system_program.zig");
 pub const slot_hashes = @import("slot_hashes.zig");
 
