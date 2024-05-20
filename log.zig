@@ -39,3 +39,15 @@ pub inline fn logComputeUnits() void {
         std.debug.print("Compute units not available\n");
     }
 }
+
+pub inline fn logData(data: []const []const u8) void {
+    if (bpf.is_bpf_program) {
+        const Syscall = struct {
+            extern fn sol_log_data(ptr: [*]const []const u8, len: u64) callconv(.C) void;
+        };
+        Syscall.sol_log_data(data.ptr, data.len);
+    } else {
+        // TODO base64 encoding
+        std.debug.print("{s}\n", .{data});
+    }
+}
