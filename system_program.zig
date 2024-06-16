@@ -2,7 +2,7 @@ const std = @import("std");
 const bincode = @import("bincode");
 
 const Account = @import("account.zig").Account;
-const allocator = @import("allocator.zig");
+const allocator = @import("allocator.zig").allocator;
 const ix = @import("instruction.zig");
 const PublicKey = @import("public_key.zig").PublicKey;
 

@@ -1,7 +1,7 @@
 const std = @import("std");
 
 const Account = @import("account.zig").Account;
-const allocator = @import("allocator.zig");
+const allocator = @import("allocator.zig").allocator;
 const PublicKey = @import("public_key.zig").PublicKey;
 
 const UnalignedAccountPtr: type = *align(1) Account.Data;
