@@ -23,9 +23,8 @@ pub fn print(comptime format: []const u8, args: anytype) void {
         return log(format);
     }
 
-    const message = std.fmt.allocPrint(allocator, format, args) catch return;
-    defer allocator.free(message);
-
+    var buffer: [1024]u8 = undefined;
+    const message = std.fmt.bufPrint(&buffer, format, args) catch return;
     return log(message);
 }
 
