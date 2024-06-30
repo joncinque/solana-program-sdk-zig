@@ -1,85 +1,63 @@
 const std = @import("std");
 const generateKeypairRunStep = @import("base58/build.zig").generateKeypairRunStep;
 
-const test_paths = [_][]const u8{
-    "metaplex/metaplex.zig",
-    "sol.zig",
-    "spl/spl.zig",
-};
+// Although this function looks imperative, note that its job is to
+// declaratively construct a build graph that will be executed by an external
+// runner.
+pub fn build(b: *std.Build) void {
+    // Standard target options allows the person running `zig build` to choose
+    // what target to build for. Here we do not override the defaults, which
+    // means any target is allowed, and the default is native. Other options
+    // for restricting supported target set are available.
+    const target = b.standardTargetOptions(.{});
 
-pub fn build(b: *std.Build) !void {
-    const sol_modules = allSolModules(b, "");
+    // Standard optimization options allow the person running `zig build` to select
+    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
+    // set a preferred release mode, allowing the user to decide how to optimize.
+    const optimize = b.standardOptimizeOption(.{});
 
+    const lib = b.addStaticLibrary(.{
+        .name = "solana-sdk",
+        // In this case the main source file is merely a path, however, in more
+        // complicated build scripts, this could be a generated file.
+        .root_source_file = b.path("src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const base58_dep = b.dependency("base58", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    // adding it as a module
+    const base58_mod = base58_dep.module("base58");
+    lib.root_module.addImport("base58", base58_mod);
+
+    // This declares intent for the library to be installed into the standard
+    // location when the user invokes the "install" step (the default step when
+    // running `zig build`).
+    b.installArtifact(lib);
+
+    // Creates a step for unit testing. This only builds the test executable
+    // but does not run it.
+    const lib_unit_tests = b.addTest(.{
+        .root_source_file = b.path("src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    lib_unit_tests.root_module.addImport("base58", base58_mod);
+
+    const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
+
+    // Similar to creating the run step earlier, this exposes a `test` step to
+    // the `zig build --help` menu, providing a way for the user to request
+    // running the unit tests.
     const test_step = b.step("test", "Run unit tests");
-    inline for (test_paths) |path| {
-        const unit_tests = b.addTest(.{
-            .root_source_file = .{ .path = path },
-        });
-        inline for (sol_modules) |package| {
-            unit_tests.root_module.addImport(package.name, package.module);
-        }
-        const run_unit_tests = b.addRunArtifact(unit_tests);
-        test_step.dependOn(&run_unit_tests.step);
-    }
+    test_step.dependOn(&run_lib_unit_tests.step);
 }
 
-pub fn addSolModules(b: *std.Build, program: *std.Build.Step.Compile, comptime base_dir: []const u8) void {
-    const sol_modules = allSolModules(b, base_dir);
-    inline for (sol_modules) |package| {
-        program.root_module.addImport(package.name, package.module);
-    }
-}
-
-const AddModule = struct {
-    name: []const u8,
-    module: *std.Build.Module,
-};
-
-pub fn allSolModules(b: *std.Build, comptime base_dir: []const u8) [6]AddModule {
-    const base58 = .{ .name = "base58", .module = b.createModule(.{
-        .root_source_file = .{ .path = base_dir ++ "base58/base58.zig" },
-    }) };
-
-    const bincode = .{ .name = "bincode", .module = b.createModule(.{
-        .root_source_file = .{ .path = base_dir ++ "bincode/bincode.zig" },
-    }) };
-
-    const borsh = .{ .name = "borsh", .module = b.createModule(.{
-        .root_source_file = .{ .path = base_dir ++ "borsh/borsh.zig" },
-    }) };
-
-    const sol = .{ .name = "sol", .module = b.createModule(.{
-        .root_source_file = .{ .path = base_dir ++ "sol.zig" },
-    }) };
-    sol.module.addImport(base58.name, base58.module);
-    sol.module.addImport(bincode.name, bincode.module);
-
-    const spl = .{ .name = "spl", .module = b.createModule(.{
-        .root_source_file = .{ .path = base_dir ++ "spl/spl.zig" },
-    }) };
-    spl.module.addImport(sol.name, sol.module);
-    spl.module.addImport(bincode.name, bincode.module);
-
-    const metaplex = .{ .name = "metaplex", .module = b.createModule(.{
-        .root_source_file = .{ .path = base_dir ++ "metaplex/metaplex.zig" },
-    }) };
-    metaplex.module.addImport(sol.name, sol.module);
-    metaplex.module.addImport(borsh.name, borsh.module);
-
-    return [_]AddModule{
-        base58,
-        bincode,
-        borsh,
-        sol,
-        spl,
-        metaplex,
-    };
-}
-
-pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile, comptime base_dir: []const u8) !void {
-    addSolModules(b, program, base_dir);
-    b.installArtifact(program);
-
+pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile) !void {
     try linkSolanaProgram(b, program);
 
     const program_name = program.out_filename[0 .. program.out_filename.len - std.fs.path.extension(program.out_filename).len];
