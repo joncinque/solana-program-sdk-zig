@@ -7,7 +7,6 @@ pub usingnamespace @import("account.zig");
 pub usingnamespace @import("instruction.zig");
 pub usingnamespace @import("allocator.zig");
 pub usingnamespace @import("context.zig");
-pub usingnamespace @import("build.zig");
 pub usingnamespace @import("clock.zig");
 pub usingnamespace @import("rent.zig");
 pub usingnamespace @import("log.zig");

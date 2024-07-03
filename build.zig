@@ -1,5 +1,5 @@
 const std = @import("std");
-const generateKeypairRunStep = @import("base58/build.zig").generateKeypairRunStep;
+const generateKeypairRunStep = @import("base58").generateKeypairRunStep;
 
 // Although this function looks imperative, note that its job is to
 // declaratively construct a build graph that will be executed by an external
@@ -16,8 +16,11 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
+    // Export self as a module
+    _ = b.addModule("solana-program-sdk", .{ .root_source_file = b.path("src/root.zig") });
+
     const lib = b.addStaticLibrary(.{
-        .name = "solana-sdk",
+        .name = "solana-program-sdk",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
         .root_source_file = b.path("src/root.zig"),
@@ -57,14 +60,15 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_lib_unit_tests.step);
 }
 
-pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile) !void {
-    try linkSolanaProgram(b, program);
+pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile) void {
+    linkSolanaProgram(b, program);
 
-    const program_name = program.out_filename[0 .. program.out_filename.len - std.fs.path.extension(program.out_filename).len];
-    const path = b.fmt("{s}-keypair.json", .{program_name});
-    const lib_path = b.getInstallPath(.lib, path);
-    const run_step = try generateKeypairRunStep(b, base_dir ++ "base58/", lib_path);
-    b.getInstallStep().dependOn(&run_step.step);
+    // TODO Figure out how to build an executable in a dependency
+    //const program_name = program.out_filename[0 .. program.out_filename.len - std.fs.path.extension(program.out_filename).len];
+    //const path = b.fmt("{s}-keypair.json", .{program_name});
+    //const lib_path = b.getInstallPath(.lib, path);
+    //const run_step = generateKeypairRunStep(b, lib_path);
+    //b.getInstallStep().dependOn(&run_step.step);
 }
 
 pub const sbf_target: std.Target.Query = .{
@@ -88,7 +92,7 @@ pub const bpf_target: std.Target.Query = .{
     .cpu_features_add = std.Target.bpf.featureSet(&.{.solana}),
 };
 
-pub fn linkSolanaProgram(b: *std.Build, lib: *std.Build.Step.Compile) !void {
+pub fn linkSolanaProgram(b: *std.Build, lib: *std.Build.Step.Compile) void {
     // TODO: Due to https://github.com/ziglang/zig/issues/18404, this script
     // maps .data into .rodata, which only catches issues at runtime rather than
     // compile-time, if the program tries to use .data
