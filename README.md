@@ -24,12 +24,11 @@ You can run the convenience script in this repo to download the compiler to
 
 ## How to use
 
-1. Add this repository as a submodule to your project:
+1. Add this package and `base58-zig` to your project:
 
 ```console
-git submodule init
-git submodule add https://github.com/joncinque/solana-zig.git sol
-git submodule update --init --recursive
+zig fetch --save https://github.com/joncinque/base58-zig/archive/refs/tags/v0.12.2.tar.gz
+zig fetch --save https://github.com/joncinque/solana-sdk-zig/archive/refs/tags/v0.12.0.tar.gz
 ```
 
 2. In your build.zig, add the modules that you want one by one, or use the
@@ -37,34 +36,38 @@ helpers in `build.zig`:
 
 ```zig
 const std = @import("std");
-const sol = @import("sol/sol.zig");
+const solana = @import("solana-program-sdk");
 
 pub fn build(b: *std.build.Builder) !void {
+    // Choose the on-chain target (bpf, sbf v1, sbf v2, etc)
+    // Many targets exist in the package, including `bpf_target`,
+    // `sbf_target`, and `sbfv2_target`.
+    // See `build.zig` for more info.
+    const target = b.resolveTargetQuery(solana.sbf_target);
+    // Choose the optimization. `.ReleaseSmall` gives a good balance of
+    // optimized CU usage and smaller size of compiled binary
+    const optimize = .ReleaseSmall;
     // Define your program as a shared library
     const program = b.addSharedLibrary(.{
         .name = "program_name",
         // Give the root of your program, where the entrypoint is defined
         .root_source_file = .{ .path = "src/main.zig" },
-        // `.ReleaseSmall` gives a good balance of optimized CU usage and smaller
-        // size of compiled binary
-        .optimize = .ReleaseSmall,
-        // Many targets exist in the `sol` package, including `bpf_target`,
-        // `sbf_target`, and `sbfv2_target`.
-        // See `build.zig` for more info.
-        .target = sol.sbf_target,
+        .optimize = optimize,
+        .target = target,
     });
-    // Give the path to your local submodule of this repo to link the appropriate
-    // modules
-    try sol.buildProgram(b, program, "sol/");
+    // Use the `buildProgram` helper to create the solana-sdk module, add all
+    // of its required dependencies, link the program properly, and generate
+    // a keypair in `zig-out/lib` along with the compiled program.
+    const solana_mod = solana.buildProgram(b, program, target, optimize);
 
     // Optional, but if you define unit tests in your program files, you can run
     // them with `zig build test` with this step included
     const test_step = b.step("test", "Run unit tests");
-    const unit_tests = b.addTest(.{
+    const lib_unit_tests = b.addTest(.{
         .root_source_file = .{ .path = "src/main.zig" },
     });
-    sol.addSolModules(b, unit_tests, "sol/");
-    const run_unit_tests = b.addRunArtifact(unit_tests);
+    lib_unit_tests.root_module.addImport("solana-program-sdk", solana_mod);
+    const run_unit_tests = b.addRunArtifact(lib_unit_tests);
     test_step.dependOn(&run_unit_tests.step);
 }
 ```
@@ -72,18 +75,18 @@ pub fn build(b: *std.build.Builder) !void {
 3. Setup `src/main.zig`:
 
 ```zig
-const sol = @import("sol");
+const solana = @import("solana-program-sdk");
 
 export fn entrypoint(_: [*]u8) callconv(.C) u64 {
-    sol.print("Hello world!", .{});
+    solana.print("Hello world!", .{});
     return 0;
 }
 ```
 
-4. Download the solana-zig compiler:
+4. Download the solana-zig compiler using the script in this repository:
 
 ```console
-$ ./sol/install-solana-zig.sh
+$ ./install-solana-zig.sh
 ```
 
 5. Build and deploy your program on Solana devnet:
@@ -121,7 +124,7 @@ The unit tests require the solana-zig compiler as mentioned in the prerequisites
 You can run all unit tests for the library with:
 
 ```console
-./solana-zig/zig build test
+./solana-zig/zig build test --summary all
 ```
 
 ## Integration tests
