@@ -1,19 +1,8 @@
 const std = @import("std");
 const generateKeypairRunStep = @import("base58").generateKeypairRunStep;
 
-// Although this function looks imperative, note that its job is to
-// declaratively construct a build graph that will be executed by an external
-// runner.
 pub fn build(b: *std.Build) void {
-    // Standard target options allows the person running `zig build` to choose
-    // what target to build for. Here we do not override the defaults, which
-    // means any target is allowed, and the default is native. Other options
-    // for restricting supported target set are available.
     const target = b.standardTargetOptions(.{});
-
-    // Standard optimization options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
-    // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
     // Export self as a module
@@ -21,8 +10,6 @@ pub fn build(b: *std.Build) void {
 
     const lib = b.addStaticLibrary(.{
         .name = "solana-program-sdk",
-        // In this case the main source file is merely a path, however, in more
-        // complicated build scripts, this could be a generated file.
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
@@ -32,17 +19,11 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    // adding it as a module
     const base58_mod = base58_dep.module("base58");
     lib.root_module.addImport("base58", base58_mod);
 
-    // This declares intent for the library to be installed into the standard
-    // location when the user invokes the "install" step (the default step when
-    // running `zig build`).
     b.installArtifact(lib);
 
-    // Creates a step for unit testing. This only builds the test executable
-    // but does not run it.
     const lib_unit_tests = b.addTest(.{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
@@ -53,22 +34,42 @@ pub fn build(b: *std.Build) void {
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
 
-    // Similar to creating the run step earlier, this exposes a `test` step to
-    // the `zig build --help` menu, providing a way for the user to request
-    // running the unit tests.
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_lib_unit_tests.step);
 }
 
-pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile) void {
-    linkSolanaProgram(b, program);
+pub fn addDependencies(b: *std.Build, solana_mod: *std.Build.Module, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) void {
+    const base58_dep = b.dependency("base58", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const base58_mod = base58_dep.module("base58");
+    solana_mod.addImport("base58", base58_mod);
+}
 
-    // TODO Figure out how to build an executable in a dependency
-    //const program_name = program.out_filename[0 .. program.out_filename.len - std.fs.path.extension(program.out_filename).len];
-    //const path = b.fmt("{s}-keypair.json", .{program_name});
-    //const lib_path = b.getInstallPath(.lib, path);
-    //const run_step = generateKeypairRunStep(b, lib_path);
-    //b.getInstallStep().dependOn(&run_step.step);
+// General helper function to do all the tricky build steps, by creating the
+// solana-sdk module, adding its dependencies, adding the BPF link script, and
+// generating a keypair to use for deployments
+pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Module {
+    const solana_dep = b.dependency("solana-program-sdk", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const solana_mod = solana_dep.module("solana-program-sdk");
+    program.root_module.addImport("solana-program-sdk", solana_mod);
+    addDependencies(b, solana_mod, target, optimize);
+    linkSolanaProgram(b, program);
+    generateKeypair(b, program);
+    b.installArtifact(program);
+    return solana_mod;
+}
+
+pub fn generateKeypair(b: *std.Build, program: *std.Build.Step.Compile) void {
+    const program_name = program.out_filename[0 .. program.out_filename.len - std.fs.path.extension(program.out_filename).len];
+    const path = b.fmt("{s}-keypair.json", .{program_name});
+    const lib_path = b.getInstallPath(.lib, path);
+    const run_step = generateKeypairRunStep(b, lib_path);
+    b.getInstallStep().dependOn(&run_step.step);
 }
 
 pub const sbf_target: std.Target.Query = .{

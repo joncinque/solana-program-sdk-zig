@@ -16,8 +16,8 @@
     // internet connectivity.
     .dependencies = .{
         .base58 = .{
-            .url = "https://github.com/joncinque/base58-zig/archive/refs/tags/v0.12.1.tar.gz",
-            .hash = "1220c171b0066081d72bcee65626f9f47c259476c3b27bf9a058c7579a2a34cb6090",
+            .url = "https://github.com/joncinque/base58-zig/archive/refs/tags/v0.12.2.tar.gz",
+            .hash = "12203cf62befaa692c11ed82c1cea15ae6da153a87d89a969b006d99267fc4ba8626",
         },
     },
     .paths = .{
