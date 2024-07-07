@@ -11,22 +11,7 @@ pub fn build(b: *std.Build) !void {
         .target = target,
     });
 
-    // Maybe make this better -- we need to add solana's dependency to it too
-    const base58_dep = b.dependency("base58", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    const base58_mod = base58_dep.module("base58");
-
-    // Adding it as a module
-    const solana_dep = b.dependency("solana-program-sdk", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    const solana_mod = solana_dep.module("solana-program-sdk");
-    solana_mod.addImport("base58", base58_mod);
-    program.root_module.addImport("solana-program-sdk", solana_mod);
-
-    b.installArtifact(program);
-    solana.buildProgram(b, program);
+    // Adding required dependencies, link the program properly, and get a
+    // prepared modules
+    _ = solana.buildProgram(b, program, target, optimize);
 }
