@@ -1,12 +1,7 @@
 use {
-    solana_program::{
-        instruction::Instruction,
-    },
-    solana_program_test::{tokio, ProgramTest, ProgramTestContext},
-    solana_sdk::{
-        signature::{Keypair, Signer},
-        transaction::{Transaction, TransactionError},
-    },
+    solana_program::instruction::Instruction,
+    solana_program_test::{tokio, ProgramTest},
+    solana_sdk::{signature::Signer, transaction::Transaction},
 };
 
 mod program {
