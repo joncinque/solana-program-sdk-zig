@@ -6,6 +6,15 @@ If you want a more complete program example, please see the
 [`solana-helloworld-zig` repo](https://github.com/joncinque/solana-helloworld-zig),
 which also provides tests and a CLI.
 
+## Other Zig Packages for Solana Program development
+
+Here are some other packages to help with developing Solana programs with Zig:
+
+* [Bincode](https://github.com/joncinque/bincode-zig)
+* [Borsh](https://github.com/joncinque/borsh-zig)
+* [Solana Program Library](https://github.com/joncinque/solana-program-library-zig)
+* [Metaplex Token-Metadata](https://github.com/joncinque/mpl-token-metadata-zig)
+
 ## Prerequisites
 
 Requires a Solana-compatible Zig compiler, which can be built with
