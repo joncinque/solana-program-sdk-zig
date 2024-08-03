@@ -140,7 +140,7 @@ You can run all unit tests for the library with:
 
 There are also integration tests that build programs and run against the Agave
 runtime using the
-[`solana-program-test` crate](https://crates.io/solana-program-test).
+[`solana-program-test` crate](https://crates.io/crates/solana-program-test).
 
 You can run these tests using the `test.sh` script:
 
