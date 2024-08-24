@@ -1,5 +1,4 @@
 const std = @import("std");
-const generateKeypairRunStep = @import("base58").generateKeypairRunStep;
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -38,7 +37,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_lib_unit_tests.step);
 }
 
-pub fn addDependencies(b: *std.Build, solana_mod: *std.Build.Module, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) void {
+fn addDependencies(b: *std.Build, solana_mod: *std.Build.Module, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) void {
     const base58_dep = b.dependency("base58", .{
         .target = target,
         .optimize = optimize,
@@ -48,8 +47,7 @@ pub fn addDependencies(b: *std.Build, solana_mod: *std.Build.Module, target: std
 }
 
 // General helper function to do all the tricky build steps, by creating the
-// solana-sdk module, adding its dependencies, adding the BPF link script, and
-// generating a keypair to use for deployments
+// solana-sdk module, adding its dependencies, adding the BPF link script
 pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Module {
     const solana_dep = b.dependency("solana-program-sdk", .{
         .target = target,
@@ -59,17 +57,7 @@ pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile, target: std
     program.root_module.addImport("solana-program-sdk", solana_mod);
     addDependencies(b, solana_mod, target, optimize);
     linkSolanaProgram(b, program);
-    generateKeypair(b, program);
-    b.installArtifact(program);
     return solana_mod;
-}
-
-pub fn generateKeypair(b: *std.Build, program: *std.Build.Step.Compile) void {
-    const program_name = program.out_filename[0 .. program.out_filename.len - std.fs.path.extension(program.out_filename).len];
-    const path = b.fmt("{s}-keypair.json", .{program_name});
-    const lib_path = b.getInstallPath(.lib, path);
-    const run_step = generateKeypairRunStep(b, lib_path);
-    b.getInstallStep().dependOn(&run_step.step);
 }
 
 pub const sbf_target: std.Target.Query = .{
@@ -94,9 +82,6 @@ pub const bpf_target: std.Target.Query = .{
 };
 
 pub fn linkSolanaProgram(b: *std.Build, lib: *std.Build.Step.Compile) void {
-    // TODO: Due to https://github.com/ziglang/zig/issues/18404, this script
-    // maps .data into .rodata, which only catches issues at runtime rather than
-    // compile-time, if the program tries to use .data
     const linker_script = b.addWriteFile("bpf.ld",
         \\PHDRS
         \\{
@@ -111,7 +96,7 @@ pub fn linkSolanaProgram(b: *std.Build, lib: *std.Build.Step.Compile) void {
         \\. = SIZEOF_HEADERS;
         \\.text : { *(.text*) } :text
         \\.rodata : { *(.rodata*) } :rodata
-        \\.rodata : { *(.data*) } :data
+        \\.data : { *(.data*) } :data
         \\.data.rel.ro : { *(.data.rel.ro*) } :rodata
         \\.dynamic : { *(.dynamic) } :dynamic
         \\.dynsym : { *(.dynsym) } :data
