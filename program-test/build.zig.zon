@@ -1,6 +1,6 @@
 .{
     .name = "solana-sdk-program-test",
-    .version = "0.12.0",
+    .version = "0.13.0",
     .minimum_zig_version = "0.12.0",
     .dependencies = .{
         .base58 = .{
