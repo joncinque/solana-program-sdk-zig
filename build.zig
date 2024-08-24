@@ -96,10 +96,10 @@ pub fn linkSolanaProgram(b: *std.Build, lib: *std.Build.Step.Compile) void {
         \\. = SIZEOF_HEADERS;
         \\.text : { *(.text*) } :text
         \\.rodata : { *(.rodata*) } :rodata
-        \\.data : { *(.data*) } :data
         \\.data.rel.ro : { *(.data.rel.ro*) } :rodata
         \\.dynamic : { *(.dynamic) } :dynamic
         \\.dynsym : { *(.dynsym) } :data
+        \\.dynstr : { *(.dynstr) } :data
         \\.rel.dyn : { *(.rel.dyn) } :data
         \\/DISCARD/ : {
         \\*(.eh_frame*)
