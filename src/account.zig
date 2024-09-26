@@ -1,6 +1,8 @@
 const std = @import("std");
 const PublicKey = @import("public_key.zig").PublicKey;
 
+pub const ACCOUNT_DATA_PADDING = 10 * 1024;
+
 pub const Account = struct {
     /// A Solana account sliced from what is provided as inputs to the BPF virtual machine.
     pub const Data = extern struct {
@@ -48,7 +50,6 @@ pub const Account = struct {
     };
 
     ptr: *Account.Data,
-    len: usize,
 
     pub fn id(self: Account) PublicKey {
         return self.ptr.id;
@@ -85,7 +86,7 @@ pub const Account = struct {
 
     pub fn info(self: Account) Account.Info {
         const data_ptr = @as([*]u8, @ptrFromInt(@intFromPtr(self.ptr))) + @sizeOf(Account.Data);
-        const rent_epoch = @as(*u64, @ptrFromInt(@intFromPtr(self.ptr) + self.len - @sizeOf(u64)));
+        const rent_epoch = @as(*u64, @ptrFromInt(std.mem.alignForward(usize, @intFromPtr(self.ptr) + self.ptr.data_len + ACCOUNT_DATA_PADDING, @alignOf(usize))));
 
         return .{
             .id = &self.ptr.id,
