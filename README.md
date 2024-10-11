@@ -34,17 +34,17 @@ You can run the convenience script in this repo to download the compiler to
 
 ## How to use
 
-1. Add this package and `base58-zig` to your project:
+1. Add this package to your project:
 
 ```console
-zig fetch --save https://github.com/joncinque/base58-zig/archive/refs/tags/v0.13.3.tar.gz
-zig fetch --save https://github.com/joncinque/solana-program-sdk-zig/archive/refs/tags/v0.13.1.tar.gz
+zig fetch --save https://github.com/joncinque/solana-program-sdk-zig/archive/refs/tags/v0.14.0.tar.gz
 ```
 
 2. (Optional) if you want to generate a keypair during building, you'll also
-need to install clap:
+need to install base58 and clap:
 
 ```console
+zig fetch --save https://github.com/joncinque/base58-zig/archive/refs/tags/v0.13.3.tar.gz
 zig fetch --save https://github.com/Hejsil/zig-clap/archive/refs/tags/0.9.1.tar.gz
 ```
 
@@ -62,9 +62,8 @@ pub fn build(b: *std.build.Builder) !void {
     // `sbf_target`, and `sbfv2_target`.
     // See `build.zig` for more info.
     const target = b.resolveTargetQuery(solana.sbf_target);
-    // Choose the optimization. `.ReleaseSmall` gives a good balance of
-    // optimized CU usage and smaller size of compiled binary
-    const optimize = .ReleaseSmall;
+    // Choose the optimization. `.ReleaseFast` gives optimized CU usage
+    const optimize = .ReleaseFast;
     // Define your program as a shared library
     const program = b.addSharedLibrary(.{
         .name = "program_name",
@@ -73,8 +72,8 @@ pub fn build(b: *std.build.Builder) !void {
         .optimize = optimize,
         .target = target,
     });
-    // Use the `buildProgram` helper to create the solana-sdk module, add all
-    // of its required dependencies, link the program properly.
+    // Use the `buildProgram` helper to create the solana-sdk module, and link
+    // the program properly.
     const solana_mod = solana.buildProgram(b, program, target, optimize);
 
     // Install the program artifact
