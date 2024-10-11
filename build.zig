@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     // Export self as a module
-    _ = b.addModule("solana-program-sdk", .{ .root_source_file = b.path("src/root.zig") });
+    const solana_mod = b.addModule("solana-program-sdk", .{ .root_source_file = b.path("src/root.zig") });
 
     const lib = b.addStaticLibrary(.{
         .name = "solana-program-sdk",
@@ -20,6 +20,7 @@ pub fn build(b: *std.Build) void {
     });
     const base58_mod = base58_dep.module("base58");
     lib.root_module.addImport("base58", base58_mod);
+    solana_mod.addImport("base58", base58_mod);
 
     b.installArtifact(lib);
 
@@ -37,17 +38,8 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_lib_unit_tests.step);
 }
 
-fn addDependencies(b: *std.Build, solana_mod: *std.Build.Module, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) void {
-    const base58_dep = b.dependency("base58", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    const base58_mod = base58_dep.module("base58");
-    solana_mod.addImport("base58", base58_mod);
-}
-
-// General helper function to do all the tricky build steps, by creating the
-// solana-sdk module, adding its dependencies, adding the BPF link script
+// General helper function to do all the tricky build steps, by adding the
+// solana-sdk module, adding the BPF link script
 pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Module {
     const solana_dep = b.dependency("solana-program-sdk", .{
         .target = target,
@@ -55,7 +47,6 @@ pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile, target: std
     });
     const solana_mod = solana_dep.module("solana-program-sdk");
     program.root_module.addImport("solana-program-sdk", solana_mod);
-    addDependencies(b, solana_mod, target, optimize);
     linkSolanaProgram(b, program);
     return solana_mod;
 }
