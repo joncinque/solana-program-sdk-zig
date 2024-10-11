@@ -1,7 +1,7 @@
 .{
     .name = "solana-program-sdk",
-    .version = "0.13.1",
-    .minimum_zig_version = "0.12.0",
+    .version = "0.14.0",
+    .minimum_zig_version = "0.13.0",
 
     // This field is optional.
     // Each dependency must either provide a `url` and `hash`, or a `path`.
