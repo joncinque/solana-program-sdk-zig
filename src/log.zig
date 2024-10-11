@@ -1,6 +1,4 @@
 const std = @import("std");
-
-const allocator = @import("allocator.zig").allocator;
 const bpf = @import("bpf.zig");
 
 pub inline fn log(message: []const u8) void {
