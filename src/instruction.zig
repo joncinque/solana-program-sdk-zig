@@ -52,3 +52,32 @@ pub const Instruction = extern struct {
         return error.CrossProgramInvocationFailed;
     }
 };
+
+/// Helper for no-alloc CPIs. By providing a discriminant and data type, the
+/// dynamic type can be constructed in-place and used for instruction data:
+///
+/// const Discriminant = enum(u32) {
+///     one,
+/// };
+/// const Data = packed struct {
+///     field: u64
+/// };
+/// const data = InstructionData(Discriminant, Data) {
+///     .discriminant = Discriminant.one,
+///     .data = .{ .field = 1 }
+/// };
+/// const instruction = Instruction.from(.{
+///     .program_id = ...,
+///     .accounts = &[_]Account.Param{...},
+///     .data = data.asBytes(),
+/// });
+pub fn InstructionData(comptime Discriminant: type, comptime Data: type) type {
+    return packed struct {
+        discriminant: Discriminant,
+        data: Data,
+        const Self = @This();
+        fn asBytes(self: *const Self) []const u8 {
+            return std.mem.asBytes(self)[0..(@sizeOf(Discriminant) + @sizeOf(Data))];
+        }
+    };
+}
