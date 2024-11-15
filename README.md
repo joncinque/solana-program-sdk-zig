@@ -37,7 +37,7 @@ You can run the convenience script in this repo to download the compiler to
 1. Add this package to your project:
 
 ```console
-zig fetch --save https://github.com/joncinque/solana-program-sdk-zig/archive/refs/tags/v0.14.2.tar.gz
+zig fetch --save https://github.com/joncinque/solana-program-sdk-zig/archive/refs/tags/v0.15.0.tar.gz
 ```
 
 2. (Optional) if you want to generate a keypair during building, you'll also
