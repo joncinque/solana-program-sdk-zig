@@ -21,7 +21,7 @@ pub const Rent = struct {
     /// Account storage overhead for calculation of base rent.
     pub const account_storage_overhead: u64 = 128;
 
-    pub const Data = extern struct {
+    pub const Data = packed struct {
         lamports_per_byte_year: u64 = Rent.default_lamports_per_byte_year,
         exemption_threshold: f64 = Rent.default_exemption_threshold,
         burn_percent: u8 = Rent.default_burn_percent,
@@ -43,7 +43,7 @@ pub const Rent = struct {
 
         pub fn getMinimumBalance(self: Rent.Data, data_len: usize) u64 {
             const total_data_len: u64 = Rent.account_storage_overhead + data_len;
-            return @intFromFloat(@as(f64, @floatFromInt(total_data_len * self.lamports_per_byte_year)) * self.exemption_threshold);
+            return total_data_len * self.lamports_per_byte_year * @as(u64, @intFromFloat(self.exemption_threshold));
         }
     };
 

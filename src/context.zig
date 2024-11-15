@@ -9,7 +9,7 @@ pub const Context = struct {
     num_accounts: usize,
     accounts: [64]Account,
     data: []const u8,
-    program_id: *PublicKey,
+    program_id: *align(1) PublicKey,
 
     pub fn load(input: [*]u8) !Context {
         var ptr: [*]u8 = input;
@@ -25,7 +25,7 @@ pub const Context = struct {
                 ptr += @sizeOf(usize);
                 accounts[i] = accounts[data.duplicate_index];
             } else {
-                ptr += @sizeOf(Account.Data);
+                ptr += Account.DATA_HEADER;
                 ptr = @as([*]u8, @ptrFromInt(std.mem.alignForward(usize, @intFromPtr(ptr) + data.data_len + ACCOUNT_DATA_PADDING, @alignOf(usize))));
                 ptr += @sizeOf(u64);
                 accounts[i] = .{ .ptr = @as(*Account.Data, @ptrCast(@alignCast(data))) };
@@ -39,7 +39,7 @@ pub const Context = struct {
         const data = ptr[0..data_len];
         ptr += data_len;
 
-        const program_id = @as(*PublicKey, @ptrCast(ptr));
+        const program_id = @as(*align(1) PublicKey, @ptrCast(ptr));
         ptr += @sizeOf(PublicKey);
 
         return Context{
