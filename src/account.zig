@@ -52,6 +52,10 @@ pub const Account = struct {
 
     ptr: *Account.Data,
 
+    pub fn fromDataPtr(ptr: *Account.Data) Account {
+        return Account { .ptr = ptr };
+    }
+
     pub fn id(self: Account) PublicKey {
         return self.ptr.id;
     }
