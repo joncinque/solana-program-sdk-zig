@@ -1,5 +1,5 @@
 const std = @import("std");
-const solana = @import("solana-program-sdk");
+const solana = @import("solana_program_sdk");
 const base58 = @import("base58");
 
 pub fn build(b: *std.Build) !void {

@@ -3,7 +3,7 @@ name: Build library and test programs
 on: [pull_request, push]
 
 env:
-  SOLANA_ZIG_VERSION: v1.43.0
+  SOLANA_ZIG_VERSION: v1.47.0
   SOLANA_ZIG_DIR: solana-zig
 
 jobs:
@@ -60,7 +60,7 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: 1.78.0
+        toolchain: 1.84.1
 
     - name: Install build deps
       shell: bash
