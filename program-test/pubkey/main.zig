@@ -1,4 +1,4 @@
-const sol = @import("solana-program-sdk");
+const sol = @import("solana_program_sdk");
 
 export fn entrypoint(input: [*]u8) u64 {
     const context = sol.Context.load(input) catch return 1;

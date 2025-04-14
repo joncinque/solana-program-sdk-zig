@@ -5,10 +5,10 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     // Export self as a module
-    const solana_mod = b.addModule("solana-program-sdk", .{ .root_source_file = b.path("src/root.zig") });
+    const solana_mod = b.addModule("solana_program_sdk", .{ .root_source_file = b.path("src/root.zig") });
 
     const lib = b.addStaticLibrary(.{
-        .name = "solana-program-sdk",
+        .name = "solana_program_sdk",
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
@@ -41,12 +41,12 @@ pub fn build(b: *std.Build) void {
 // General helper function to do all the tricky build steps, by adding the
 // solana-sdk module, adding the BPF link script
 pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Module {
-    const solana_dep = b.dependency("solana-program-sdk", .{
+    const solana_dep = b.dependency("solana_program_sdk", .{
         .target = target,
         .optimize = optimize,
     });
-    const solana_mod = solana_dep.module("solana-program-sdk");
-    program.root_module.addImport("solana-program-sdk", solana_mod);
+    const solana_mod = solana_dep.module("solana_program_sdk");
+    program.root_module.addImport("solana_program_sdk", solana_mod);
     linkSolanaProgram(b, program);
     return solana_mod;
 }
@@ -54,7 +54,6 @@ pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile, target: std
 pub const sbf_target: std.Target.Query = .{
     .cpu_arch = .sbf,
     .os_tag = .solana,
-    .cpu_features_add = std.Target.sbf.featureSet(&.{.solana}),
 };
 
 pub const sbfv2_target: std.Target.Query = .{
@@ -73,7 +72,8 @@ pub const bpf_target: std.Target.Query = .{
 };
 
 pub fn linkSolanaProgram(b: *std.Build, lib: *std.Build.Step.Compile) void {
-    const linker_script = b.addWriteFile("bpf.ld",
+    const write_file_step = b.addWriteFiles();
+    const linker_script = write_file_step.add("bpf.ld",
         \\PHDRS
         \\{
         \\text PT_LOAD  ;
@@ -100,9 +100,9 @@ pub fn linkSolanaProgram(b: *std.Build, lib: *std.Build.Step.Compile) void {
         \\}
     );
 
-    lib.step.dependOn(&linker_script.step);
+    lib.step.dependOn(&write_file_step.step);
 
-    lib.setLinkerScript(linker_script.files.items[0].getPath());
+    lib.setLinkerScript(linker_script);
     lib.stack_size = 4096;
     lib.link_z_notext = true;
     lib.root_module.pic = true;

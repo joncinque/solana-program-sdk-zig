@@ -3,7 +3,7 @@ name: Build library and test programs
 on: [pull_request, push]
 
 env:
-  SOLANA_ZIG_VERSION: v1.43.0
+  SOLANA_ZIG_VERSION: v1.47.0
   SOLANA_ZIG_DIR: solana-zig
 
 jobs:
@@ -60,7 +60,14 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: 1.78.0
+        toolchain: 1.84.1
+
+    # took the workaround from https://github.com/sfackler/rust-openssl/issues/2149
+    - name: Set Perl environment variables
+      if: runner.os == 'Windows'
+      run: |
+        echo "PERL=$((where.exe perl)[0])" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+        echo "OPENSSL_SRC_PERL=$((where.exe perl)[0])" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
     - name: Install build deps
       shell: bash

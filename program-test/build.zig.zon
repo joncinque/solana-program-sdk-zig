@@ -1,17 +1,18 @@
 .{
-    .name = "solana-sdk-program-test",
+    .fingerprint = 0x8d2e243edb223d6c,
+    .name = .solana_program_sdk_test,
     .version = "0.13.0",
-    .minimum_zig_version = "0.12.0",
+    .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .base58 = .{
-            .url = "https://github.com/joncinque/base58-zig/archive/refs/tags/v0.13.3.tar.gz",
-            .hash = "1220fd067bf167b9062cc29ccf715ff97643c2d3f8958beea863b6036876bb71bcb8",
+            .url = "https://github.com/joncinque/base58-zig/archive/refs/tags/v0.14.0.tar.gz",
+            .hash = "base58-0.14.0-6-CZm81qAAD4JCRHgewcNh8FS0pmnk7-OmwUkosaFKvg",
         },
         .clap = .{
-            .url = "https://github.com/Hejsil/zig-clap/archive/refs/tags/0.9.1.tar.gz",
-            .hash = "122062d301a203d003547b414237229b09a7980095061697349f8bef41be9c30266b",
+            .url = "https://github.com/Hejsil/zig-clap/archive/refs/tags/0.10.0.tar.gz",
+            .hash = "clap-0.10.0-oBajB434AQBDh-Ei3YtoKIRxZacVPF1iSwp3IX_ZB8f0",
         },
-        .@"solana-program-sdk" = .{
+        .solana_program_sdk = .{
             .path = "..",
         },
     },

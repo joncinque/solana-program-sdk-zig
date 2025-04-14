@@ -1,5 +1,6 @@
 const std = @import("std");
 const assert = std.debug.assert;
+const Alignment = std.mem.Alignment;
 
 const heap_start = @as([*]u8, @ptrFromInt(0x300000000));
 const heap_length = 32 * 1024;
@@ -39,6 +40,7 @@ pub const FixedBufferAllocator = struct {
                 .alloc = alloc,
                 .resize = resize,
                 .free = free,
+                .remap = remap,
             },
         };
     }
@@ -54,7 +56,7 @@ pub const FixedBufferAllocator = struct {
         return buf.ptr + buf.len == self.buffer.ptr + self.end_index().*;
     }
 
-    fn alloc(ctx: *anyopaque, n: usize, log2_ptr_align: u8, ra: usize) ?[*]u8 {
+    fn alloc(ctx: *anyopaque, n: usize, alignment: Alignment, ra: usize) ?[*]u8 {
         const self: *FixedBufferAllocator = @ptrCast(@alignCast(ctx));
         _ = ra;
 
@@ -62,7 +64,7 @@ pub const FixedBufferAllocator = struct {
             self.end_index().* = @sizeOf(usize);
         }
 
-        const ptr_align = @as(usize, 1) << @as(std.mem.Allocator.Log2Align, @intCast(log2_ptr_align));
+        const ptr_align = alignment.toByteUnits();
         const current_end_index = self.end_index().*;
         const adjust_off = std.mem.alignPointerOffset(self.buffer.ptr + current_end_index, ptr_align) orelse return null;
         const adjusted_index = current_end_index + adjust_off;
@@ -75,12 +77,12 @@ pub const FixedBufferAllocator = struct {
     fn resize(
         ctx: *anyopaque,
         buf: []u8,
-        log2_buf_align: u8,
+        alignment: Alignment,
         new_size: usize,
         return_address: usize,
     ) bool {
         const self: *FixedBufferAllocator = @ptrCast(@alignCast(ctx));
-        _ = log2_buf_align;
+        _ = alignment;
         _ = return_address;
         assert(@inComptime() or self.ownsSlice(buf));
 
@@ -105,17 +107,27 @@ pub const FixedBufferAllocator = struct {
     fn free(
         ctx: *anyopaque,
         buf: []u8,
-        log2_buf_align: u8,
+        alignment: Alignment,
         return_address: usize,
     ) void {
         const self: *FixedBufferAllocator = @ptrCast(@alignCast(ctx));
-        _ = log2_buf_align;
+        _ = alignment;
         _ = return_address;
         assert(@inComptime() or self.ownsSlice(buf));
 
         if (self.isLastAllocation(buf)) {
             self.end_index().* -= buf.len;
         }
+    }
+
+    fn remap(
+        context: *anyopaque,
+        memory: []u8,
+        alignment: Alignment,
+        new_len: usize,
+        return_address: usize,
+    ) ?[*]u8 {
+        return if (resize(context, memory, alignment, new_len, return_address)) memory.ptr else null;
     }
 
     pub fn reset(self: *FixedBufferAllocator) void {
@@ -169,17 +181,13 @@ const ReverseFixedBufferAllocator = struct {
                 // isn't possible to resize without rewriting all the memory at
                 // the new lower address, so we just omit it here
                 .resize = std.mem.Allocator.noResize,
+                .remap = std.mem.Allocator.noRemap,
             },
         };
     }
 
-    fn alloc(
-        ctx: *anyopaque,
-        n: usize,
-        log2_ptr_align: u8,
-        return_address: usize,
-    ) ?[*]u8 {
-        _ = return_address;
+    fn alloc(ctx: *anyopaque, n: usize, alignment: Alignment, ra: usize) ?[*]u8 {
+        _ = ra;
 
         const self: *ReverseFixedBufferAllocator = @ptrCast(@alignCast(ctx));
         if (self.end_index().* == 0) {
@@ -187,7 +195,7 @@ const ReverseFixedBufferAllocator = struct {
             const end = @as(*usize, @ptrCast(@alignCast(self.buffer[cutoff..])));
             end.* = cutoff;
         }
-        const ptr_align = @as(usize, 1) << @as(std.mem.Allocator.Log2Align, @intCast(log2_ptr_align));
+        const ptr_align = alignment.toByteUnits();
         const buffer_address = @intFromPtr(self.buffer.ptr);
         var new_end_address = buffer_address + self.end_index().* - n;
         new_end_address &= ~(ptr_align - 1);
@@ -203,11 +211,11 @@ const ReverseFixedBufferAllocator = struct {
     fn free(
         ctx: *anyopaque,
         buf: []u8,
-        log2_buf_align: u8,
+        alignment: Alignment,
         return_address: usize,
     ) void {
         var self: *ReverseFixedBufferAllocator = @ptrCast(@alignCast(ctx));
-        _ = log2_buf_align;
+        _ = alignment;
         _ = return_address;
 
         if (self.isLastAllocation(buf)) {
@@ -216,10 +224,10 @@ const ReverseFixedBufferAllocator = struct {
     }
 };
 
-const test_size = 800000 * @sizeOf(u64);
-var test_fixed_buffer: [test_size]u8 = undefined;
+const TEST_SIZE: usize = 800000;
 test "ReverseFixedBufferAllocator" {
-    var bump_allocator = ReverseFixedBufferAllocator.init(&test_fixed_buffer);
+    var test_fixed_buffer = [_]u64{0} ** TEST_SIZE;
+    var bump_allocator = ReverseFixedBufferAllocator.init(@ptrCast(@alignCast(&test_fixed_buffer)));
 
     try std.heap.testAllocator(bump_allocator.allocator());
     try std.heap.testAllocatorAligned(bump_allocator.allocator());
@@ -228,7 +236,8 @@ test "ReverseFixedBufferAllocator" {
 }
 
 test "FixedBufferAllocator" {
-    var bump_allocator = FixedBufferAllocator.init(&test_fixed_buffer);
+    var test_fixed_buffer = [_]u64{0} ** TEST_SIZE;
+    var bump_allocator = FixedBufferAllocator.init(@ptrCast(@alignCast(&test_fixed_buffer)));
 
     try std.heap.testAllocator(bump_allocator.allocator());
     try std.heap.testAllocatorAligned(bump_allocator.allocator());

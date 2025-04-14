@@ -1,7 +1,8 @@
 .{
-    .name = "solana-program-sdk",
-    .version = "0.15.1",
-    .minimum_zig_version = "0.13.0",
+    .fingerprint = 0xdc47aff950fd68c0,
+    .name = .solana_program_sdk,
+    .version = "0.16.0",
+    .minimum_zig_version = "0.14.0",
 
     // This field is optional.
     // Each dependency must either provide a `url` and `hash`, or a `path`.
@@ -10,8 +11,8 @@
     // internet connectivity.
     .dependencies = .{
         .base58 = .{
-            .url = "https://github.com/joncinque/base58-zig/archive/refs/tags/v0.13.3.tar.gz",
-            .hash = "1220fd067bf167b9062cc29ccf715ff97643c2d3f8958beea863b6036876bb71bcb8",
+            .url = "https://github.com/joncinque/base58-zig/archive/refs/tags/v0.14.0.tar.gz",
+            .hash = "base58-0.14.0-6-CZm81qAAD4JCRHgewcNh8FS0pmnk7-OmwUkosaFKvg",
         },
     },
     .paths = .{

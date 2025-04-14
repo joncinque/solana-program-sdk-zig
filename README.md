@@ -37,15 +37,15 @@ You can run the convenience script in this repo to download the compiler to
 1. Add this package to your project:
 
 ```console
-zig fetch --save https://github.com/joncinque/solana-program-sdk-zig/archive/refs/tags/v0.15.1.tar.gz
+zig fetch --save https://github.com/joncinque/solana-program-sdk-zig/archive/refs/tags/v0.16.0.tar.gz
 ```
 
 2. (Optional) if you want to generate a keypair during building, you'll also
 need to install base58 and clap:
 
 ```console
-zig fetch --save https://github.com/joncinque/base58-zig/archive/refs/tags/v0.13.3.tar.gz
-zig fetch --save https://github.com/Hejsil/zig-clap/archive/refs/tags/0.9.1.tar.gz
+zig fetch --save https://github.com/joncinque/base58-zig/archive/refs/tags/v0.14.0.tar.gz
+zig fetch --save https://github.com/Hejsil/zig-clap/archive/refs/tags/0.10.0.tar.gz
 ```
 
 3. In your build.zig, add the modules that you want one by one, or use the
@@ -53,7 +53,7 @@ helpers in `build.zig`:
 
 ```zig
 const std = @import("std");
-const solana = @import("solana-program-sdk");
+const solana = @import("solana_program_sdk");
 const base58 = @import("base58");
 
 pub fn build(b: *std.build.Builder) !void {
@@ -88,7 +88,7 @@ pub fn build(b: *std.build.Builder) !void {
     const lib_unit_tests = b.addTest(.{
         .root_source_file = b.path("src/main.zig"),
     });
-    lib_unit_tests.root_module.addImport("solana-program-sdk", solana_mod);
+    lib_unit_tests.root_module.addImport("solana_program_sdk", solana_mod);
     const run_unit_tests = b.addRunArtifact(lib_unit_tests);
     test_step.dependOn(&run_unit_tests.step);
 }
@@ -97,7 +97,7 @@ pub fn build(b: *std.build.Builder) !void {
 4. Setup `src/main.zig`:
 
 ```zig
-const solana = @import("solana-program-sdk");
+const solana = @import("solana_program_sdk");
 
 export fn entrypoint(_: [*]u8) callconv(.C) u64 {
     solana.print("Hello world!", .{});
