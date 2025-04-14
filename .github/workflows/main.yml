@@ -66,6 +66,17 @@ jobs:
       shell: bash
       run: ./program-test/install-build-deps.sh
 
+    # took the workaround from https://github.com/sfackler/rust-openssl/issues/2149
+    - name: Setup openssl on Windows
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        echo "PERL=$(which perl)" >> $GITHUB_ENV
+        echo "OPENSSL_SRC_PERL=$(which perl)" >> $GITHUB_ENV
+        choco install openssl --version 3.4.1 --install-arguments="'/DIR=C:\OpenSSL'" -y
+        echo "OPENSSL_LIB_DIR=C:\OpenSSL\lib\VC\x64\MT" >> $GITHUB_ENV
+        echo "OPENSSL_INCLUDE_DIR=C:\OpenSSL\include" >> $GITHUB_ENV
+
     - name: Build and test program
       shell: bash
       run: ./program-test/test.sh
