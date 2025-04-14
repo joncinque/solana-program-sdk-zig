@@ -62,10 +62,8 @@ jobs:
       with:
         toolchain: 1.84.1
 
-    - name: Install build deps
-      shell: bash
-      run: ./program-test/install-build-deps.sh
-
     - name: Build and test program
       shell: bash
-      run: ./program-test/test.sh
+      run: |
+        ./program-test/install-build-deps.sh
+        ./program-test/test.sh
