@@ -62,6 +62,13 @@ jobs:
       with:
         toolchain: 1.84.1
 
+    # took the workaround from https://github.com/sfackler/rust-openssl/issues/2149
+    - name: Set Perl environment variables
+      if: runner.os == 'Windows'
+      run: |
+        echo "PERL=$((where.exe perl)[0])" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+        echo "OPENSSL_SRC_PERL=$((where.exe perl)[0])" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
     - name: Install build deps
       shell: bash
       run: ./program-test/install-build-deps.sh
