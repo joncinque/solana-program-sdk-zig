@@ -1,6 +1,12 @@
 name: Build library and test programs
 
-on: [pull_request, push]
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    branches:
+      - 'main'
 
 env:
   SOLANA_ZIG_VERSION: v1.47.0
