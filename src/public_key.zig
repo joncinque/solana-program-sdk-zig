@@ -13,17 +13,17 @@ pub const ProgramDerivedAddress = struct {
     bump_seed: [1]u8,
 };
 
-pub const PublicKey = packed struct {
+pub const PublicKey = extern struct {
     pub const length: usize = 32;
     pub const base58_length: usize = 44;
 
     pub const max_num_seeds: usize = 16;
     pub const max_seed_length: usize = 32;
 
-    bytes: u256,
+    bytes: [32]u8,
 
     pub fn from(bytes: [PublicKey.length]u8) PublicKey {
-        return .{ .bytes = mem.bytesToValue(u256, &bytes) };
+        return .{ .bytes = bytes };
     }
 
     pub fn comptimeFromBase58(comptime encoded: []const u8) PublicKey {
@@ -51,7 +51,7 @@ pub const PublicKey = packed struct {
     }
 
     pub fn isPointOnCurve(self: PublicKey) bool {
-        const Y = std.crypto.ecc.Curve25519.Fe.fromBytes(mem.toBytes(self.bytes));
+        const Y = std.crypto.ecc.Curve25519.Fe.fromBytes(self.bytes);
         const Z = std.crypto.ecc.Curve25519.Fe.one;
         const YY = Y.sq();
         const u = YY.sub(Z);
@@ -125,9 +125,9 @@ pub const PublicKey = packed struct {
         inline while (i < seeds.len) : (i += 1) {
             hasher.update(seeds[i]);
         }
-        hasher.update(mem.asBytes(&program_id.bytes));
+        hasher.update(&program_id.bytes);
         hasher.update("ProgramDerivedAddress");
-        hasher.final(mem.asBytes(&address.bytes));
+        hasher.final(&address.bytes);
 
         if (address.isPointOnCurve()) {
             return error.InvalidSeeds;
@@ -222,7 +222,7 @@ pub const PublicKey = packed struct {
         _ = fmt;
         _ = options;
         var buffer: [base58.bitcoin.getEncodedLengthUpperBound(PublicKey.length)]u8 = undefined;
-        try writer.print("{s}", .{base58.bitcoin.encode(&buffer, mem.asBytes(&self.bytes))});
+        try writer.print("{s}", .{base58.bitcoin.encode(&buffer, &self.bytes)});
     }
 };
 

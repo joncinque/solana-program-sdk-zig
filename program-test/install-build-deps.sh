@@ -2,9 +2,22 @@
 set -e
 case $(uname -s | cut -c1-7) in
 "Windows" | "MINGW64")
-  choco install openssl --version 3.4.1 --install-arguments="'/DIR=C:\OpenSSL'" -y
-  export OPENSSL_LIB_DIR='C:\OpenSSL\lib\VC\x64\MT'
-  export OPENSSL_INCLUDE_DIR='C:\OpenSSL\include'
+  cat > vcpkg.json <<EOL
+{
+  "dependencies": ["openssl"],
+  "overrides": [
+    {
+      "name": "openssl",
+      "version": "3.4.1"
+    }
+  ],
+  "builtin-baseline": "5ee5eee0d3e9c6098b24d263e9099edcdcef6631"
+}
+EOL
+  vcpkg install --triplet x64-windows-static-md
+  rm vcpkg.json
+  export "OPENSSL_LIB_DIR=$GITHUB_WORKSPACE/vcpkg_installed/x64-windows-static-md/lib"
+  export "OPENSSL_INCLUDE_DIR=$GITHUB_WORKSPACE/vcpkg_installed/x64-windows-static-md/include"
   choco install protoc
   export PROTOC='C:\ProgramData\chocolatey\lib\protoc\tools\bin\protoc.exe'
   ;;
