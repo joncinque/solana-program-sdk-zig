@@ -47,7 +47,7 @@ pub const PublicKey = extern struct {
     }
 
     pub fn equals(self: PublicKey, other: PublicKey) bool {
-        return self.bytes == other.bytes;
+        return std.mem.eql(u8, &self.bytes, &other.bytes);
     }
 
     pub fn isPointOnCurve(self: PublicKey) bool {
@@ -237,4 +237,11 @@ test "public_key: comptime find program address" {
     const pda = comptime PublicKey.comptimeFindProgramAddress(.{"hello"}, id);
     try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{}", .{pda.address});
     try comptime testing.expectEqual(@as(u8, 255), pda.bump_seed[0]);
+}
+
+test "public_key: equality" {
+    const id = comptime PublicKey.comptimeFromBase58("11111111111111111111111111111111");
+    const id2 = comptime PublicKey.comptimeFromBase58("11111111111111111111111111111111");
+    try testing.expectEqual(id, id2);
+    try testing.expect(id.equals(id2));
 }
