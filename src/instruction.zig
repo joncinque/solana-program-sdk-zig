@@ -84,7 +84,7 @@ pub fn InstructionData(comptime Discriminant: type, comptime Data: type) type {
         discriminant: Discriminant,
         data: Data,
         const Self = @This();
-        fn asBytes(self: *const Self) []const u8 {
+        pub fn asBytes(self: *const Self) []const u8 {
             return std.mem.asBytes(self)[0..((@bitSizeOf(Discriminant) + @bitSizeOf(Data)) / 8)];
         }
     };
