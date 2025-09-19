@@ -15,7 +15,7 @@ fn program_test() -> ProgramTest {
 #[tokio::test]
 async fn call() {
     let pt = program_test();
-    let mut context = pt.start_with_context().await;
+    let context = pt.start_with_context().await;
     let blockhash = context.banks_client.get_latest_blockhash().await.unwrap();
     let transaction = Transaction::new_signed_with_payer(
         &[Instruction {
