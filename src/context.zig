@@ -7,19 +7,30 @@ const PublicKey = @import("public_key.zig").PublicKey;
 
 pub const Context = struct {
     num_accounts: u64,
-    accounts: [64]Account,
+    // MAX support parse account number is 64
+    accounts: [MAX_ACCOUNTS]Account,
     data: []const u8,
     program_id: *align(1) PublicKey,
+
+    // FUTURE: maybe future change this number
+    const MAX_ACCOUNTS = 64;
 
     pub fn load(input: [*]u8) !Context {
         var ptr: [*]u8 = input;
 
+        // Get the number of accounts
         const num_accounts: *u64 = @ptrCast(@alignCast(ptr));
+        // Check if the number of accounts is within the supported range
+        if (num_accounts.* > MAX_ACCOUNTS) {
+            return error.MaxAccountsExceeded;
+        }
+        // next ptr point to account data
         ptr += @sizeOf(u64);
 
+        // Account Parse
         var i: usize = 0;
-        var accounts: [64]Account = undefined;
-        while (i < num_accounts.*) {
+        var accounts: [MAX_ACCOUNTS]Account = undefined;
+        while (i < num_accounts.*) : (i += 1) {
             const data: *Account.Data = @ptrCast(@alignCast(ptr));
             if (data.duplicate_index != std.math.maxInt(u8)) {
                 ptr += @sizeOf(u64);
@@ -29,7 +40,6 @@ pub const Context = struct {
                 ptr += Account.DATA_HEADER + data.data_len + ACCOUNT_DATA_PADDING + @sizeOf(u64);
                 ptr = @ptrFromInt(std.mem.alignForward(u64, @intFromPtr(ptr), @alignOf(u64)));
             }
-            i += 1;
         }
 
         const data_len: *u64 = @ptrCast(@alignCast(ptr));
