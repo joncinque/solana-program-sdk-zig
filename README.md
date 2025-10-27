@@ -37,15 +37,15 @@ You can run the convenience script in this repo to download the compiler to
 1. Add this package to your project:
 
 ```console
-zig fetch --save https://github.com/joncinque/solana-program-sdk-zig/archive/refs/tags/v0.16.0.tar.gz
+zig fetch --save https://github.com/joncinque/solana-program-sdk-zig/archive/refs/tags/v0.17.0.tar.gz
 ```
 
 2. (Optional) if you want to generate a keypair during building, you'll also
 need to install base58 and clap:
 
 ```console
-zig fetch --save https://github.com/joncinque/base58-zig/archive/refs/tags/v0.14.0.tar.gz
-zig fetch --save https://github.com/Hejsil/zig-clap/archive/refs/tags/0.10.0.tar.gz
+zig fetch --save https://github.com/joncinque/base58-zig/archive/refs/tags/v0.15.0.tar.gz
+zig fetch --save https://github.com/Hejsil/zig-clap/archive/refs/tags/0.11.0.tar.gz
 ```
 
 3. In your build.zig, add the modules that you want one by one, or use the
@@ -64,13 +64,18 @@ pub fn build(b: *std.build.Builder) !void {
     const target = b.resolveTargetQuery(solana.sbf_target);
     // Choose the optimization. `.ReleaseFast` gives optimized CU usage
     const optimize = .ReleaseFast;
-    // Define your program as a shared library
-    const program = b.addSharedLibrary(.{
-        .name = "program_name",
-        // Give the root of your program, where the entrypoint is defined
-        .root_source_file = b.path("src/main.zig"),
-        .optimize = optimize,
+    // Create a module for your program
+    const mod = b.addModule("my_program", .{
+        .root_source_file = b.path("src/root.zig"),
         .target = target,
+        .optimize = optimize,
+    });
+    // Define your program as a shared library
+    const program = b.addLibrary(.{
+        .name = "program_name",
+        .linkage = .dynamic,
+        // Give the root of your program, where the entrypoint is defined
+        .root_module = mod,
     });
     // Use the `buildProgram` helper to create the solana-sdk module, and link
     // the program properly.
@@ -86,7 +91,7 @@ pub fn build(b: *std.build.Builder) !void {
     // them with `zig build test` with this step included
     const test_step = b.step("test", "Run unit tests");
     const lib_unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/main.zig"),
+        .root_module = mod,
     });
     lib_unit_tests.root_module.addImport("solana_program_sdk", solana_mod);
     const run_unit_tests = b.addRunArtifact(lib_unit_tests);
@@ -99,7 +104,7 @@ pub fn build(b: *std.build.Builder) !void {
 ```zig
 const solana = @import("solana_program_sdk");
 
-export fn entrypoint(_: [*]u8) callconv(.C) u64 {
+export fn entrypoint(_: [*]u8) callconv(.c) u64 {
     solana.print("Hello world!", .{});
     return 0;
 }

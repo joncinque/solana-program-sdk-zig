@@ -5,10 +5,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     // Export self as a module
-    const solana_mod = b.addModule("solana_program_sdk", .{ .root_source_file = b.path("src/root.zig") });
-
-    const lib = b.addStaticLibrary(.{
-        .name = "solana_program_sdk",
+    const solana_mod = b.addModule("solana_program_sdk", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
@@ -19,15 +16,10 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     const base58_mod = base58_dep.module("base58");
-    lib.root_module.addImport("base58", base58_mod);
     solana_mod.addImport("base58", base58_mod);
 
-    b.installArtifact(lib);
-
     const lib_unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/root.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = solana_mod,
     });
 
     lib_unit_tests.root_module.addImport("base58", base58_mod);

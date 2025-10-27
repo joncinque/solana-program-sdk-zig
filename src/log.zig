@@ -4,7 +4,7 @@ const bpf = @import("bpf.zig");
 pub inline fn log(message: []const u8) void {
     if (bpf.is_bpf_program) {
         const Syscall = struct {
-            extern fn sol_log_(ptr: [*]const u8, len: u64) callconv(.C) void;
+            extern fn sol_log_(ptr: [*]const u8, len: u64) callconv(.c) void;
         };
         Syscall.sol_log_(message.ptr, message.len);
     } else {
@@ -29,7 +29,7 @@ pub fn print(comptime format: []const u8, args: anytype) void {
 pub inline fn logComputeUnits() void {
     if (bpf.is_bpf_program) {
         const Syscall = struct {
-            extern fn sol_log_compute_units_() callconv(.C) void;
+            extern fn sol_log_compute_units_() callconv(.c) void;
         };
         Syscall.sol_log_compute_units_();
     } else {
@@ -40,7 +40,7 @@ pub inline fn logComputeUnits() void {
 pub inline fn logData(data: []const []const u8) void {
     if (bpf.is_bpf_program) {
         const Syscall = struct {
-            extern fn sol_log_data(ptr: [*]const []const u8, len: u64) callconv(.C) void;
+            extern fn sol_log_data(ptr: [*]const []const u8, len: u64) callconv(.c) void;
         };
         Syscall.sol_log_data(data.ptr, data.len);
     } else {

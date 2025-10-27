@@ -51,11 +51,11 @@ pub const Rent = struct {
         var rent: Rent.Data = undefined;
         if (bpf.is_bpf_program) {
             const Syscall = struct {
-                extern fn sol_get_rent_sysvar(ptr: *Rent.Data) callconv(.C) u64;
+                extern fn sol_get_rent_sysvar(ptr: *Rent.Data) callconv(.c) u64;
             };
             const result = Syscall.sol_get_rent_sysvar(&rent);
             if (result != 0) {
-                log.print("failed to get rent sysvar: error code {}", .{result});
+                log.print("failed to get rent sysvar: error code {f}", .{result});
                 return error.Unexpected;
             }
         }

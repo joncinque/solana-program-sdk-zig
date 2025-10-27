@@ -1,4 +1,4 @@
-name: Build library and test programs
+name: Main
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - 'main'
 
 env:
-  SOLANA_ZIG_VERSION: v1.47.0
+  SOLANA_ZIG_VERSION: v1.52.0
   SOLANA_ZIG_DIR: solana-zig
 
 jobs:
@@ -66,7 +66,7 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: 1.84.1
+        toolchain: 1.86.0
 
     # took the workaround from https://github.com/sfackler/rust-openssl/issues/2149
     - name: Set Perl environment variables

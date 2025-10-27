@@ -94,7 +94,7 @@ pub const PublicKey = extern struct {
                     seeds_len: u64,
                     program_id_ptr: *const PublicKey,
                     address_ptr: *PublicKey,
-                ) callconv(.C) u64;
+                ) callconv(.c) u64;
             };
 
             var seeds_array: [seeds.len][]const u8 = undefined;
@@ -107,7 +107,7 @@ pub const PublicKey = extern struct {
                 &address,
             );
             if (result != 0) {
-                log.print("failed to create program address with seeds {any} and program id {}: error code {}", .{
+                log.print("failed to create program address with seeds {any} and program id {f}: error code {f}", .{
                     seeds,
                     program_id,
                     result,
@@ -147,7 +147,7 @@ pub const PublicKey = extern struct {
                     program_id_ptr: *const PublicKey,
                     address_ptr: *PublicKey,
                     bump_seed_ptr: *u8,
-                ) callconv(.C) u64;
+                ) callconv(.c) u64;
             };
 
             var seeds_array: [seeds.len][]const u8 = undefined;
@@ -170,7 +170,7 @@ pub const PublicKey = extern struct {
                 &pda.bump_seed[0],
             );
             if (result != 0) {
-                log.print("failed to find program address given seeds {any} and program id {}: error code {}", .{
+                log.print("failed to find program address given seeds {any} and program id {f}: error code {f}", .{
                     seeds,
                     program_id,
                     result,
@@ -215,12 +215,10 @@ pub const PublicKey = extern struct {
 
     pub fn jsonStringify(self: PublicKey, options: anytype, writer: anytype) !void {
         _ = options;
-        try writer.print("\"{}\"", .{self});
+        try writer.print("\"{f}\"", .{self});
     }
 
-    pub fn format(self: PublicKey, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
-        _ = fmt;
-        _ = options;
+    pub fn format(self: @This(), writer: *std.Io.Writer) std.Io.Writer.Error!void {
         var buffer: [base58.bitcoin.getEncodedLengthUpperBound(PublicKey.length)]u8 = undefined;
         try writer.print("{s}", .{base58.bitcoin.encode(&buffer, &self.bytes)});
     }
@@ -229,13 +227,13 @@ pub const PublicKey = extern struct {
 test "public_key: comptime create program address" {
     const id = comptime PublicKey.comptimeFromBase58("11111111111111111111111111111111");
     const address = comptime PublicKey.comptimeCreateProgramAddress(.{ "hello", &.{255} }, id);
-    try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{}", .{address});
+    try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{f}", .{address});
 }
 
 test "public_key: comptime find program address" {
     const id = comptime PublicKey.comptimeFromBase58("11111111111111111111111111111111");
     const pda = comptime PublicKey.comptimeFindProgramAddress(.{"hello"}, id);
-    try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{}", .{pda.address});
+    try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{f}", .{pda.address});
     try comptime testing.expectEqual(@as(u8, 255), pda.bump_seed[0]);
 }
 

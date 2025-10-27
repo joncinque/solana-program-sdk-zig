@@ -25,7 +25,7 @@ pub const Clock = extern struct {
         var clock: Clock = undefined;
         if (bpf.is_bpf_program) {
             const Syscall = struct {
-                extern fn sol_get_clock_sysvar(ptr: *Clock) callconv(.C) u64;
+                extern fn sol_get_clock_sysvar(ptr: *Clock) callconv(.c) u64;
             };
             const result = Syscall.sol_get_clock_sysvar(&clock);
             if (result != 0) {
