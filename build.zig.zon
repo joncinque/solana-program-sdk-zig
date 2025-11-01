@@ -1,7 +1,7 @@
 .{
     .fingerprint = 0xdc47aff950fd68c0,
     .name = .solana_program_sdk,
-    .version = "0.17.0",
+    .version = "0.17.1",
     .minimum_zig_version = "0.15.0",
 
     // This field is optional.
