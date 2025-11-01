@@ -107,7 +107,7 @@ pub const PublicKey = extern struct {
                 &address,
             );
             if (result != 0) {
-                log.print("failed to create program address with seeds {any} and program id {f}: error code {f}", .{
+                log.print("failed to create program address with seeds {any} and program id {f}: error code {d}", .{
                     seeds,
                     program_id,
                     result,
@@ -170,7 +170,7 @@ pub const PublicKey = extern struct {
                 &pda.bump_seed[0],
             );
             if (result != 0) {
-                log.print("failed to find program address given seeds {any} and program id {f}: error code {f}", .{
+                log.print("failed to find program address given seeds {any} and program id {f}: error code {d}", .{
                     seeds,
                     program_id,
                     result,
@@ -230,11 +230,24 @@ test "public_key: comptime create program address" {
     try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{f}", .{address});
 }
 
+test "public_key: create program address" {
+    const id = comptime PublicKey.comptimeFromBase58("11111111111111111111111111111111");
+    const address = try PublicKey.createProgramAddress(.{ "hello", &.{255} }, id);
+    try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{f}", .{address});
+}
+
 test "public_key: comptime find program address" {
     const id = comptime PublicKey.comptimeFromBase58("11111111111111111111111111111111");
     const pda = comptime PublicKey.comptimeFindProgramAddress(.{"hello"}, id);
     try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{f}", .{pda.address});
     try comptime testing.expectEqual(@as(u8, 255), pda.bump_seed[0]);
+}
+
+test "public_key: find program address" {
+    const id = comptime PublicKey.comptimeFromBase58("11111111111111111111111111111111");
+    const pda = try PublicKey.findProgramAddress(.{"hello"}, id);
+    try testing.expectFmt("2PjSSVURwJV4o9wz1BDVwwddvcUCuF1NKFpcQBF9emYJ", "{f}", .{pda.address});
+    try testing.expectEqual(@as(u8, 255), pda.bump_seed[0]);
 }
 
 test "public_key: equality" {
