@@ -55,7 +55,7 @@ pub const Rent = struct {
             };
             const result = Syscall.sol_get_rent_sysvar(&rent);
             if (result != 0) {
-                log.print("failed to get rent sysvar: error code {f}", .{result});
+                log.print("failed to get rent sysvar: error code {d}", .{result});
                 return error.Unexpected;
             }
         }
