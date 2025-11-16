@@ -93,9 +93,9 @@ pub const Account = struct {
     pub fn dataLen(self: Account) u64 {
         return self.ptr.data_len;
     }
-
-    pub fn realloc(self: Account, new_data_len: u64) error.InvalidRealloc!void {
-        const diff = @subWithOverflow(new_data_len, self.original_data_len);
+    
+    pub fn realloc(self: Account, new_data_len: u64) error{InvalidRealloc}!void {
+        const diff = @subWithOverflow(new_data_len, self.ptr.original_data_len);
         if (diff[1] == 0 and diff[0] > ACCOUNT_DATA_PADDING) {
             return error.InvalidRealloc;
         }
