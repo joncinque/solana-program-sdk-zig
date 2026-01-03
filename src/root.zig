@@ -21,6 +21,8 @@ const error_mod = @import("error.zig");
 // Direct exports for convenience
 pub const entrypoint = entrypoint_mod.entrypoint;
 pub const declareEntrypoint = entrypoint_mod.declareEntrypoint;
+pub const ProgramResult = entrypoint_mod.ProgramResult;
+pub const ProcessInstruction = entrypoint_mod.ProcessInstruction;
 pub const PublicKey = public_key.PublicKey;
 pub const Account = account.Account;
 pub const ProgramError = error_mod.ProgramError;
