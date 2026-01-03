@@ -14,6 +14,7 @@ pub const blake3 = @import("blake3.zig");
 pub const slot_hashes = @import("slot_hashes.zig");
 
 pub const bpf = @import("bpf.zig");
+pub const syscalls = @import("syscalls.zig");
 
 const entrypoint_mod = @import("entrypoint.zig");
 const error_mod = @import("error.zig");

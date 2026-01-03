@@ -1,6 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const PublicKey = @import("public_key.zig").PublicKey;
+const syscalls = @import("syscalls.zig");
 
 pub const bpf_loader_deprecated_program_id = PublicKey.comptimeFromBase58("BPFLoader1111111111111111111111111111111111");
 pub const bpf_loader_program_id = PublicKey.comptimeFromBase58("BPFLoader2111111111111111111111111111111111");
@@ -27,8 +28,6 @@ pub fn getUpgradeableLoaderProgramDataId(program_id: PublicKey) !PublicKey {
     return pda.address;
 }
 
-pub const is_bpf_program = !builtin.is_test and
-    ((builtin.os.tag == .freestanding and
-        builtin.cpu.arch == .bpfel and
-        std.Target.bpf.featureSetHas(builtin.cpu.features, .solana)) or
-        builtin.cpu.arch == .sbf);
+/// Check if we're running as a BPF program
+/// Uses the new detection method compatible with standard Zig
+pub const is_bpf_program = syscalls.is_bpf_program;

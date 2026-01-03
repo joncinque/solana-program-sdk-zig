@@ -1,14 +1,23 @@
 # solana-program-sdk-zig
 
-Write Solana on-chain programs in Zig!
+Write Solana on-chain programs in Zig using the **standard Zig compiler**!
 
-If you want a more complete program example, please see the
-[`solana-helloworld-zig` repo](https://github.com/joncinque/solana-helloworld-zig),
-which also provides tests and a CLI.
+This SDK uses a two-stage build pipeline:
+1. Zig → LLVM bitcode (using standard `bpfel-freestanding` target)
+2. LLVM bitcode → Solana eBPF (using `sbpf-linker`)
+
+No custom Zig compiler fork required!
+
+## Features
+
+- Uses standard Zig compiler (0.15.2+)
+- Zero-copy input deserialization
+- Type-safe API matching Rust SDK
+- MurmurHash3-based syscall bindings
+- Full PDA and CPI support
+- Build helper functions for easy integration
 
 ## Other Zig Packages for Solana Program development
-
-Here are some other packages to help with developing Solana programs with Zig:
 
 * [Base-58](https://github.com/joncinque/base58-zig)
 * [Bincode](https://github.com/joncinque/bincode-zig)
@@ -18,154 +27,324 @@ Here are some other packages to help with developing Solana programs with Zig:
 
 ## Prerequisites
 
-Requires a Solana-compatible Zig compiler, which can be built with
-[solana-zig-bootstrap](https://github.com/joncinque/solana-zig-bootstrap).
+1. **Zig 0.15.2+** - Standard Zig compiler
+   ```console
+   # Download from https://ziglang.org/download/
+   ```
 
-It's also possible to download an appropriate compiler for your system from the
-[GitHub Releases](https://github.com/joncinque/solana-zig-bootstrap/releases).
+2. **LLVM 18** - Required by sbpf-linker
+   ```console
+   # Ubuntu/Debian
+   sudo apt-get install llvm-18 llvm-18-dev
+   
+   # macOS
+   brew install llvm@18
+   ```
 
-You can run the convenience script in this repo to download the compiler to
-`solana-zig`:
+3. **sbpf-linker** - Solana BPF linker (LLVM-based)
+   ```console
+   cargo install --git https://github.com/blueshift-gg/sbpf-linker.git
+   ```
 
+4. **Solana CLI** - For deployment
+   ```console
+   sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+   ```
+
+## Quick Start
+
+### 1. Create a new project
+
+```console
+mkdir my-solana-program && cd my-solana-program
+zig init
 ```
-./install-solana-zig.sh
-./solana-zig/zig build test
+
+### 2. Add dependencies to `build.zig.zon`
+
+```zig
+.dependencies = .{
+    .solana_program_sdk = .{
+        .url = "https://github.com/joncinque/solana-program-sdk-zig/archive/refs/tags/v0.17.0.tar.gz",
+        .hash = "...", // Run zig build to get the hash
+    },
+    .base58 = .{
+        .url = "https://github.com/joncinque/base58-zig/archive/refs/tags/v0.15.0.tar.gz",
+        .hash = "...",
+    },
+},
 ```
 
-## How to use
-
-1. Add this package to your project:
-
+Or use `zig fetch`:
 ```console
 zig fetch --save https://github.com/joncinque/solana-program-sdk-zig/archive/refs/tags/v0.17.0.tar.gz
-```
-
-2. (Optional) if you want to generate a keypair during building, you'll also
-need to install base58 and clap:
-
-```console
 zig fetch --save https://github.com/joncinque/base58-zig/archive/refs/tags/v0.15.0.tar.gz
-zig fetch --save https://github.com/Hejsil/zig-clap/archive/refs/tags/0.11.0.tar.gz
 ```
 
-3. In your build.zig, add the modules that you want one by one, or use the
-helpers in `build.zig`:
+### 3. Write your program
+
+Create `src/main.zig`:
+
+```zig
+const sdk = @import("solana_program_sdk");
+
+fn processInstruction(
+    program_id: *sdk.PublicKey,
+    accounts: []sdk.Account,
+    data: []const u8,
+) sdk.ProgramResult {
+    _ = accounts;
+    _ = data;
+    
+    // Log a message
+    sdk.print("Hello from Zig!", .{});
+    
+    // Log the program ID
+    sdk.log.logPubkey(&program_id.bytes);
+    
+    return .ok;
+}
+
+comptime {
+    sdk.entrypoint(&processInstruction);
+}
+```
+
+### 4. Configure build.zig
+
+Using the SDK's helper functions:
 
 ```zig
 const std = @import("std");
 const solana = @import("solana_program_sdk");
-const base58 = @import("base58");
 
-pub fn build(b: *std.build.Builder) !void {
-    // Choose the on-chain target (bpf, sbf v1, sbf v2, etc)
-    // Many targets exist in the package, including `bpf_target`,
-    // `sbf_target`, and `sbfv2_target`.
-    // See `build.zig` for more info.
-    const target = b.resolveTargetQuery(solana.sbf_target);
-    // Choose the optimization. `.ReleaseFast` gives optimized CU usage
-    const optimize = .ReleaseFast;
-    // Create a module for your program
-    const mod = b.addModule("my_program", .{
-        .root_source_file = b.path("src/root.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    // Define your program as a shared library
-    const program = b.addLibrary(.{
-        .name = "program_name",
-        .linkage = .dynamic,
-        // Give the root of your program, where the entrypoint is defined
-        .root_module = mod,
-    });
-    // Use the `buildProgram` helper to create the solana-sdk module, and link
-    // the program properly.
-    const solana_mod = solana.buildProgram(b, program, target, optimize);
-
-    // Install the program artifact
-    b.installArtifact(program);
-
-    // Optional: to generate a keypair in `zig-out/lib`, be sure to run this too:
-    base58.generateProgramKeypair(b, program);
-
-    // Optional, but if you define unit tests in your program files, you can run
-    // them with `zig build test` with this step included
+pub fn build(b: *std.Build) !void {
+    // Create test step
     const test_step = b.step("test", "Run unit tests");
-    const lib_unit_tests = b.addTest(.{
-        .root_module = mod,
-    });
-    lib_unit_tests.root_module.addImport("solana_program_sdk", solana_mod);
-    const run_unit_tests = b.addRunArtifact(lib_unit_tests);
-    test_step.dependOn(&run_unit_tests.step);
+    
+    // Build the Solana program with tests
+    const program = solana.addSolanaProgramWithTests(b, .{
+        .name = "my_program",
+        .root_source_file = b.path("src/main.zig"),
+        .optimize = .ReleaseSmall,
+    }, test_step);
+
+    // Default install builds the .so file
+    b.getInstallStep().dependOn(program.getInstallStep());
+    
+    // Optional: add a bitcode-only step (no sbpf-linker required)
+    const bc_step = b.step("bitcode", "Generate LLVM bitcode only");
+    bc_step.dependOn(&program.bitcode_step.step);
 }
 ```
 
-4. Setup `src/main.zig`:
+### 5. Build and deploy
+
+```console
+# Build (generates .bc and .so)
+zig build
+
+# Or just generate bitcode (no sbpf-linker required)
+zig build bitcode
+
+# Run tests
+zig build test
+
+# Deploy to devnet
+solana airdrop -ud 1
+solana program deploy -ud zig-out/lib/my_program.so
+```
+
+## How It Works
+
+### Two-Stage Build Pipeline
+
+```
+┌─────────────────┐    ┌──────────────┐    ┌─────────────────┐
+│   Zig Source    │───>│ LLVM Bitcode │───>│  Solana eBPF    │
+│   (.zig files)  │    │   (.bc file) │    │   (.so file)    │
+└─────────────────┘    └──────────────┘    └─────────────────┘
+        │                     │                     │
+   Standard Zig          sbpf-linker           Deploy to
+   Compiler              (LTO pass)            Solana
+```
+
+### Syscalls via Function Pointers
+
+Solana syscalls are invoked via MurmurHash3-32 hashed function pointers:
 
 ```zig
-const solana = @import("solana_program_sdk");
+// Hash: murmur3_32("sol_log_", 0) = 0x207559bd
+pub const sol_log_ = @as(*align(1) const fn([*]const u8, u64) callconv(.c) void, @ptrFromInt(0x207559bd));
+```
 
-export fn entrypoint(_: [*]u8) callconv(.c) u64 {
-    solana.print("Hello world!", .{});
-    return 0;
+The Solana VM resolves these magic addresses at runtime.
+
+## API Reference
+
+### Entrypoint
+
+```zig
+const sdk = @import("solana_program_sdk");
+
+fn processInstruction(
+    program_id: *sdk.PublicKey,
+    accounts: []sdk.Account,
+    data: []const u8,
+) sdk.ProgramResult {
+    // Your program logic here
+    return .ok;  // or .{ .err = sdk.ProgramError.InvalidArgument }
+}
+
+comptime {
+    sdk.entrypoint(&processInstruction);
 }
 ```
 
-5. Download the solana-zig compiler using the script in this repository:
+### Logging
 
-```console
-$ ./install-solana-zig.sh
+```zig
+// Log a static message (works in BPF mode)
+sdk.print("Hello Solana!", .{});
+
+// Log a public key (use syscall directly)
+sdk.log.logPubkey(&pubkey.bytes);
+
+// Log 5 u64 values
+sdk.log.log64(1, 2, 3, 4, 5);
+
+// Log compute units consumed
+sdk.log.logComputeUnits();
 ```
 
-6. Build and deploy your program on Solana devnet:
+> **Note**: In BPF mode, `sdk.print` only supports static strings. 
+> For dynamic values, use `log64` for numbers or `logPubkey` for public keys.
 
-```console
-$ ./solana-zig/zig build --summary all
-Program ID: FHGeakPPYgDWomQT6Embr4mVW5DSoygX6TaxQXdgwDYU
+### Program Derived Addresses
 
-$ solana airdrop -ud 1
-Requesting airdrop of 1 SOL
-
-Signature: 52rgcLosCjRySoQq5MQLpoKg4JacCdidPNXPWbJhTE1LJR2uzFgp93Q7Dq1hQrcyc6nwrNrieoN54GpyNe8H4j3T
-
-882.4039166 SOL
-
-$ solana program deploy -ud zig-out/lib/program_name.so
-Program Id: FHGeakPPYgDWomQT6Embr4mVW5DSoygX6TaxQXdgwDYU
+```zig
+const pda = try sdk.PublicKey.findProgramAddress(.{"seed"}, program_id);
+// pda.address - the derived address
+// pda.bump_seed - the bump seed
 ```
 
-And that's it!
+### Error Handling
 
-### Targets available
-
-The helpers in build.zig contain various Solana targets. Here are their analogues
-to the Rust build tools:
-
-* `sbf_target` -> `cargo build-sbf`
-* `sbfv2_target` -> `cargo build-sbf --arch sbfv2`
-* **Deprecated** `bpf_target` -> `cargo build-bpf`
-
-## Unit tests
-
-The unit tests require the solana-zig compiler as mentioned in the prerequisites.
-
-You can run all unit tests for the library with:
-
-```console
-./solana-zig/zig build test --summary all
+```zig
+fn processInstruction(...) sdk.ProgramResult {
+    if (invalid_condition) {
+        return .{ .err = sdk.ProgramError.InvalidArgument };
+    }
+    return .ok;
+}
 ```
 
-## Integration tests
+## Build Helpers
 
-There are also integration tests that build programs and run against the Agave
-runtime using the
-[`solana-program-test` crate](https://crates.io/crates/solana-program-test).
+The SDK provides two helper functions for building Solana programs:
 
-You can run these tests using the `test.sh` script:
+### `addSolanaProgram`
+
+Build a Solana program without tests:
+
+```zig
+const program = solana.addSolanaProgram(b, .{
+    .name = "my_program",
+    .root_source_file = b.path("src/main.zig"),
+    .optimize = .ReleaseSmall,  // optional, defaults to ReleaseSmall
+});
+b.getInstallStep().dependOn(program.getInstallStep());
+```
+
+### `addSolanaProgramWithTests`
+
+Build a Solana program with unit tests:
+
+```zig
+const test_step = b.step("test", "Run unit tests");
+const program = solana.addSolanaProgramWithTests(b, .{
+    .name = "my_program",
+    .root_source_file = b.path("src/main.zig"),
+}, test_step);
+```
+
+### SolanaProgram struct
+
+Both functions return a `SolanaProgram` struct:
+
+```zig
+pub const SolanaProgram = struct {
+    bitcode_step: *std.Build.Step.Run,  // Generates .bc file
+    link_step: *std.Build.Step.Run,     // Links to .so file
+    install_step: *std.Build.Step,      // Final install step
+    
+    pub fn getInstallStep(self: SolanaProgram) *std.Build.Step;
+};
+```
+
+## Unit Tests
+
+Run SDK unit tests:
+
+```console
+zig build test --summary all
+```
+
+## Integration Tests
+
+Integration tests use `solana-program-test` crate:
 
 ```console
 cd program-test/
 ./test.sh
 ```
 
-These tests require a Rust compiler along with the solana-zig compiler, as
-mentioned in the prerequisites. Be sure to run `./install-solana-zig.sh` first.
+## Project Structure
+
+```
+solana-program-sdk-zig/
+├── src/
+│   ├── root.zig          # Main module exports
+│   ├── syscalls.zig      # Solana syscalls (MurmurHash3 pointers)
+│   ├── entrypoint.zig    # Program entrypoint
+│   ├── error.zig         # ProgramError matching Rust SDK
+│   ├── public_key.zig    # PublicKey + PDA functions
+│   ├── account.zig       # Account type
+│   ├── context.zig       # Input deserialization
+│   └── log.zig           # Logging utilities
+├── tools/
+│   └── murmur3.zig       # MurmurHash3 implementation
+├── program-test/         # Integration tests
+└── build.zig             # Build configuration with helpers
+```
+
+## Troubleshooting
+
+### sbpf-linker can't find LLVM
+
+If you see errors about LLVM shared libraries, set `LD_LIBRARY_PATH`:
+
+```console
+export LD_LIBRARY_PATH=/usr/lib/llvm-18/lib:$LD_LIBRARY_PATH
+```
+
+The SDK's build helpers automatically set this for you.
+
+### Format arguments don't work in BPF mode
+
+In BPF mode, `sdk.print` doesn't support format arguments like `{s}` or `{d}`.
+Use the syscall-based logging functions instead:
+
+```zig
+// Instead of: sdk.print("Value: {}", .{value});
+// Use:
+sdk.log.log64(value, 0, 0, 0, 0);
+
+// Instead of: sdk.print("Key: {f}", .{pubkey});
+// Use:
+sdk.log.logPubkey(&pubkey.bytes);
+```
+
+## License
+
+MIT

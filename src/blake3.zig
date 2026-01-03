@@ -1,19 +1,12 @@
-const bpf = @import("bpf.zig");
+const syscalls = @import("syscalls.zig");
 const log = @import("log.zig");
 const Hash = @import("hash.zig").Hash;
 
 /// Return a Blake3 hash for the given data.
 pub fn hashv(vals: []const []const u8) !Hash {
     var hash: Hash = undefined;
-    if (bpf.is_bpf_program) {
-        const Syscall = struct {
-            extern fn sol_blake3(
-                vals_ptr: [*]const []const u8,
-                vals_len: u64,
-                hash_ptr: *Hash,
-            ) callconv(.c) u64;
-        };
-        const result = Syscall.sol_blake3(vals.ptr, vals.len, &hash);
+    if (syscalls.is_bpf_program) {
+        const result = syscalls.sol_blake3(@ptrCast(vals.ptr), vals.len, &hash.bytes);
         if (result != 0) {
             log.print("failed to get blake3 hash: error code {}", .{result});
             return error.Unexpected;

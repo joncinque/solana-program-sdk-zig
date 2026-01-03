@@ -2,7 +2,7 @@ const std = @import("std");
 const base58 = @import("base58");
 const builtin = @import("builtin");
 
-const bpf = @import("bpf.zig");
+const syscalls = @import("syscalls.zig");
 const log = @import("log.zig");
 
 const mem = std.mem;
@@ -87,31 +87,18 @@ pub const PublicKey = extern struct {
 
         var address: PublicKey = undefined;
 
-        if (bpf.is_bpf_program) {
-            const Syscall = struct {
-                extern fn sol_create_program_address(
-                    seeds_ptr: [*]const []const u8,
-                    seeds_len: u64,
-                    program_id_ptr: *const PublicKey,
-                    address_ptr: *PublicKey,
-                ) callconv(.c) u64;
-            };
-
+        if (syscalls.is_bpf_program) {
             var seeds_array: [seeds.len][]const u8 = undefined;
             inline for (seeds, 0..) |seed, i| seeds_array[i] = seed;
 
-            const result = Syscall.sol_create_program_address(
-                &seeds_array,
+            const result = syscalls.sol_create_program_address(
+                @ptrCast(&seeds_array),
                 seeds.len,
-                &program_id,
-                &address,
+                &program_id.bytes,
+                &address.bytes,
             );
             if (result != 0) {
-                log.print("failed to create program address with seeds {any} and program id {f}: error code {d}", .{
-                    seeds,
-                    program_id,
-                    result,
-                });
+                log.print("failed to create program address: error code {d}", .{result});
                 return error.Unexpected;
             }
 
@@ -139,17 +126,7 @@ pub const PublicKey = extern struct {
     pub fn findProgramAddress(seeds: anytype, program_id: PublicKey) !ProgramDerivedAddress {
         var pda: ProgramDerivedAddress = undefined;
 
-        if (comptime bpf.is_bpf_program) {
-            const Syscall = struct {
-                extern fn sol_try_find_program_address(
-                    seeds_ptr: [*]const []const u8,
-                    seeds_len: u64,
-                    program_id_ptr: *const PublicKey,
-                    address_ptr: *PublicKey,
-                    bump_seed_ptr: *u8,
-                ) callconv(.c) u64;
-            };
-
+        if (comptime syscalls.is_bpf_program) {
             var seeds_array: [seeds.len][]const u8 = undefined;
 
             comptime var seeds_index = 0;
@@ -162,19 +139,15 @@ pub const PublicKey = extern struct {
                 }
             }
 
-            const result = Syscall.sol_try_find_program_address(
-                &seeds_array,
+            const result = syscalls.sol_try_find_program_address(
+                @ptrCast(&seeds_array),
                 seeds.len,
-                &program_id,
-                &pda.address,
+                &program_id.bytes,
+                &pda.address.bytes,
                 &pda.bump_seed[0],
             );
             if (result != 0) {
-                log.print("failed to find program address given seeds {any} and program id {f}: error code {d}", .{
-                    seeds,
-                    program_id,
-                    result,
-                });
+                log.print("failed to find program address: error code {d}", .{result});
                 return error.Unexpected;
             }
 
@@ -218,6 +191,7 @@ pub const PublicKey = extern struct {
         try writer.print("\"{f}\"", .{self});
     }
 
+    /// Format for std.fmt (Zig 0.15+ signature)
     pub fn format(self: @This(), writer: *std.Io.Writer) std.Io.Writer.Error!void {
         var buffer: [base58.bitcoin.getEncodedLengthUpperBound(PublicKey.length)]u8 = undefined;
         try writer.print("{s}", .{base58.bitcoin.encode(&buffer, &self.bytes)});
