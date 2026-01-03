@@ -7,3 +7,4 @@ zig-cache/
 zig-out/
 .zig-cache/
 .DS_Store
+.surfpool
