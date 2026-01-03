@@ -58,6 +58,9 @@ pub const Rent = struct {
                 log.print("failed to get rent sysvar: error code {d}", .{result});
                 return error.Unexpected;
             }
+        } else {
+            log.log("cannot get rent data in non-bpf context");
+            return error.Unexpected;
         }
         return rent;
     }

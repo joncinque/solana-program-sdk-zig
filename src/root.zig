@@ -15,6 +15,19 @@ pub const slot_hashes = @import("slot_hashes.zig");
 
 pub const bpf = @import("bpf.zig");
 
+const entrypoint_mod = @import("entrypoint.zig");
+const error_mod = @import("error.zig");
+
+// Direct exports for convenience
+pub const entrypoint = entrypoint_mod.entrypoint;
+pub const declareEntrypoint = entrypoint_mod.declareEntrypoint;
+pub const ProgramResult = entrypoint_mod.ProgramResult;
+pub const ProcessInstruction = entrypoint_mod.ProcessInstruction;
+pub const PublicKey = public_key.PublicKey;
+pub const Account = account.Account;
+pub const ProgramError = error_mod.ProgramError;
+pub const print = log.print;
+
 pub const native_loader_id = public_key.PublicKey.comptimeFromBase58("NativeLoader1111111111111111111111111111111");
 pub const incinerator_id = public_key.PublicKey.comptimeFromBase58("1nc1nerator11111111111111111111111111111111");
 
