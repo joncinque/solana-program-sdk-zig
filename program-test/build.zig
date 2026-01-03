@@ -3,13 +3,16 @@ const solana = @import("solana_program_sdk");
 const base58 = @import("base58");
 
 pub fn build(b: *std.Build) !void {
-    const optimize = .ReleaseSmall;
+    const optimize = .ReleaseFast;
     const target = b.resolveTargetQuery(solana.sbf_target);
-    const program = b.addSharedLibrary(.{
+    const program = b.addLibrary(.{
         .name = "pubkey",
-        .root_source_file = b.path("pubkey/main.zig"),
-        .optimize = optimize,
-        .target = target,
+        .linkage = .dynamic,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("pubkey/main.zig"),
+            .optimize = optimize,
+            .target = target,
+        }),
     });
 
     // Adding required dependencies, link the program properly, and get a

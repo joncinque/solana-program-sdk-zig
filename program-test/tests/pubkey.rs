@@ -1,35 +1,38 @@
 use {
-    solana_program::instruction::Instruction,
-    solana_program_test::{tokio, ProgramTest},
-    solana_sdk::{signature::Signer, transaction::Transaction},
+    mollusk_svm::Mollusk,
+    solana_instruction::Instruction,
+    solana_sdk_ids::bpf_loader_upgradeable,
 };
 
 mod program {
-    solana_program::declare_id!("Zigc1Hc97L8Pebma74jDzYiyoUvdxxcj7Gxppg9VRxK");
+    solana_pubkey::declare_id!("Zigc1Hc97L8Pebma74jDzYiyoUvdxxcj7Gxppg9VRxK");
 }
 
-fn program_test() -> ProgramTest {
-    ProgramTest::new("pubkey", program::id(), None)
-}
+#[test]
+fn test_run() {
+    // Initialize Mollusk
+    let mut mollusk = Mollusk::default();
 
-#[tokio::test]
-async fn call() {
-    let pt = program_test();
-    let context = pt.start_with_context().await;
-    let blockhash = context.banks_client.get_latest_blockhash().await.unwrap();
-    let transaction = Transaction::new_signed_with_payer(
-        &[Instruction {
-            program_id: program::id(),
-            accounts: vec![],
-            data: vec![],
-        }],
-        Some(&context.payer.pubkey()),
-        &[&context.payer],
-        blockhash,
+    // Add a program to Mollusk
+    mollusk.add_program(
+        &program::id(),
+        "zig-out/lib/pubkey",
+        &bpf_loader_upgradeable::id(),
     );
-    context
-        .banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+
+    // Create transfer instruction
+    let instruction = Instruction {
+        program_id: program::id(),
+        accounts: vec![],
+        data: vec![],
+    };
+
+    // Define initial account states
+    let accounts = vec![];
+
+    // Process the instruction
+    let result = mollusk.process_instruction(&instruction, &accounts);
+
+    // Check the result
+    assert!(result.program_result.is_ok());
 }

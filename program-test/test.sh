@@ -9,4 +9,4 @@ fi
 set -e
 cd $ROOT_DIR/program-test
 $ZIG build --summary all --verbose
-SBF_OUT_DIR="$ROOT_DIR/program-test/zig-out/lib" cargo test --manifest-path "$ROOT_DIR/program-test/Cargo.toml"
+cargo test --manifest-path "$ROOT_DIR/program-test/Cargo.toml"

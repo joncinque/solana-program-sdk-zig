@@ -11,7 +11,7 @@ pub fn hashv(vals: []const []const u8) !Hash {
                 vals_ptr: [*]const []const u8,
                 vals_len: u64,
                 hash_ptr: *Hash,
-            ) callconv(.C) u64;
+            ) callconv(.c) u64;
         };
         const result = Syscall.sol_blake3(vals.ptr, vals.len, &hash);
         if (result != 0) {

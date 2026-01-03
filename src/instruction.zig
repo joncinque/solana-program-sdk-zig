@@ -16,7 +16,7 @@ pub const Instruction = extern struct {
         account_infos_len: usize,
         signer_seeds: ?[*]const []const []const u8,
         signer_seeds_len: usize,
-    ) callconv(.C) u64;
+    ) callconv(.c) u64;
 
     pub fn from(params: struct {
         program_id: *const PublicKey,
