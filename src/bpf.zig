@@ -28,7 +28,4 @@ pub fn getUpgradeableLoaderProgramDataId(program_id: PublicKey) !PublicKey {
 }
 
 pub const is_bpf_program = !builtin.is_test and
-    ((builtin.os.tag == .freestanding and
-        builtin.cpu.arch == .bpfel and
-        std.Target.bpf.featureSetHas(builtin.cpu.features, .solana)) or
-        builtin.cpu.arch == .sbf);
+    (builtin.os.tag == .freestanding and builtin.cpu.arch == .bpfel);

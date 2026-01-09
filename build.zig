@@ -43,24 +43,24 @@ pub fn buildProgram(b: *std.Build, program: *std.Build.Step.Compile, target: std
     return solana_mod;
 }
 
-pub const sbf_target: std.Target.Query = .{
-    .cpu_arch = .sbf,
-    .os_tag = .solana,
-};
+//pub const sbf_target: std.Target.Query = .{
+    //.cpu_arch = .sbf,
+    //.os_tag = .solana,
+//};
 
-pub const sbfv2_target: std.Target.Query = .{
-    .cpu_arch = .sbf,
-    .cpu_model = .{
-        .explicit = &std.Target.sbf.cpu.sbfv2,
-    },
-    .os_tag = .solana,
-    .cpu_features_add = std.Target.sbf.cpu.sbfv2.features,
-};
+//pub const sbfv2_target: std.Target.Query = .{
+    //.cpu_arch = .sbf,
+    //.cpu_model = .{
+        //.explicit = &std.Target.sbf.cpu.sbfv2,
+    //},
+    //.os_tag = .solana,
+    //.cpu_features_add = std.Target.sbf.cpu.sbfv2.features,
+//};
 
 pub const bpf_target: std.Target.Query = .{
     .cpu_arch = .bpfel,
     .os_tag = .freestanding,
-    .cpu_features_add = std.Target.bpf.featureSet(&.{.solana}),
+    //.cpu_features_add = std.Target.bpf.featureSet(&.{.solana}),
 };
 
 pub fn linkSolanaProgram(b: *std.Build, lib: *std.Build.Step.Compile) void {
@@ -96,6 +96,7 @@ pub fn linkSolanaProgram(b: *std.Build, lib: *std.Build.Step.Compile) void {
 
     lib.setLinkerScript(linker_script);
     lib.stack_size = 4096;
+    lib.lto = .full;
     lib.link_z_notext = true;
     lib.root_module.pic = true;
     lib.root_module.strip = true;
