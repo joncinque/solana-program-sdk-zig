@@ -9,7 +9,7 @@ on:
       - 'main'
 
 env:
-  SOLANA_ZIG_VERSION: v1.52.0
+  SOLANA_ZIG_VERSION: v1.53.0
   SOLANA_ZIG_DIR: solana-zig
 
 jobs:
@@ -74,10 +74,6 @@ jobs:
       run: |
         echo "PERL=$((where.exe perl)[0])" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
         echo "OPENSSL_SRC_PERL=$((where.exe perl)[0])" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-
-    - name: Install build deps
-      shell: bash
-      run: ./program-test/install-build-deps.sh
 
     - name: Build and test program
       shell: bash

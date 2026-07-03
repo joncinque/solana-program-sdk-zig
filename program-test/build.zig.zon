@@ -1,16 +1,16 @@
 .{
     .fingerprint = 0x8d2e243edb223d6c,
     .name = .solana_program_sdk_test,
-    .version = "0.15.0",
-    .minimum_zig_version = "0.15.0",
+    .version = "0.16.0",
+    .minimum_zig_version = "0.16.0",
     .dependencies = .{
         .base58 = .{
-            .url = "https://github.com/joncinque/base58-zig/archive/refs/tags/v0.15.0.tar.gz",
-            .hash = "base58-0.15.0-6-CZmwVpAAAxqof6REya9G_XyHL1fTqUsAcsZ-J1IHMF",
+            .url = "https://github.com/joncinque/base58-zig/archive/refs/tags/v0.16.0.tar.gz",
+            .hash = "base58-0.16.0-6-CZm3FpAADsdYOBJ_MQ6qePc0Lv4fX6fTRgebI62rwO",
         },
         .clap = .{
-            .url = "https://github.com/Hejsil/zig-clap/archive/refs/tags/0.11.0.tar.gz",
-            .hash = "clap-0.11.0-oBajB-HnAQDPCKYzwF7rO3qDFwRcD39Q0DALlTSz5H7e",
+            .url = "https://github.com/Hejsil/zig-clap/archive/refs/tags/0.12.0.tar.gz",
+            .hash = "clap-0.12.0-oBajB7foAQDqlSwaSG5g0yq7xGbQARUsBk5T64gAOqP5",
         },
         .solana_program_sdk = .{
             .path = "..",
